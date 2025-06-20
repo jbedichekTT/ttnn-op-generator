@@ -2,7 +2,7 @@ import os
 import re
 from pathlib import Path
 import time
-from typing import Union, List, Dict, Tuple, Optional
+from typing import Union, List, Dict, Tuple, Optional, Any
 import tempfile
 import subprocess
 import json
@@ -968,8 +968,397 @@ def format_doc_results(results: Dict[str, Dict]) -> str:
 
     return output
 
-
-# Alternative implementation using a mock API endpoint (if the docs have a search API)
+def parse_and_analyze_code(file_path: str) -> Dict[str, Any]:
+    """
+    Parse a C++ file with tree-sitter and return its structure.
+    
+    This implementation works with the correct tree-sitter API where
+    query.captures() returns a dictionary of {capture_name: [nodes]}.
+    """
+    from tree_sitter_tool import parse_file, query, has_errors
+    
+    tree_id = parse_file(file_path)
+    
+    # Initialize the structure
+    structure = {
+        "has_errors": has_errors(tree_id),
+        "functions": [],
+        "classes": [],
+        "includes": [],
+        "namespaces": [],
+        "structs": [],
+        "global_variables": [],
+        "typedefs": [],
+        "macros": []
+    }
+    
+    # 1. Extract functions
+    func_query = """
+    (function_definition
+        type: (_)? @return_type
+        declarator: (function_declarator
+            declarator: (identifier) @fn_name
+            parameters: (parameter_list) @params)
+        body: (compound_statement)? @body
+    ) @fn_def
+    
+    (declaration
+        type: (_)? @return_type
+        declarator: (function_declarator
+            declarator: (identifier) @fn_name
+            parameters: (parameter_list) @params)
+    ) @fn_decl
+    """
+    
+    # Run the query - returns list of dicts with name, text, byte_range
+    func_results = query(tree_id, func_query)
+    
+    # Group captures by their parent node (function definition/declaration)
+    # We'll use byte ranges to determine nesting
+    fn_groups = []
+    
+    # First, identify all function definitions and declarations
+    for result in func_results:
+        if result['name'] in ['fn_def', 'fn_decl']:
+            fn_groups.append({
+                'type': result['name'],
+                'range': result['byte_range'],
+                'is_definition': result['name'] == 'fn_def',
+                'captures': {result['name']: result}
+            })
+    
+    # Then, assign other captures to their parent function
+    for result in func_results:
+        if result['name'] not in ['fn_def', 'fn_decl']:
+            # Find which function this capture belongs to
+            capture_start, capture_end = result['byte_range']
+            
+            for group in fn_groups:
+                group_start, group_end = group['range']
+                if capture_start >= group_start and capture_end <= group_end:
+                    group['captures'][result['name']] = result
+                    break
+    
+    # Convert groups to function info
+    for group in fn_groups:
+        captures = group['captures']
+        fn_info = {
+            "name": captures.get('fn_name', {}).get('text', 'unknown'),
+            "byte_range": group['range'],
+            "is_definition": group['is_definition'],
+            "return_type": captures.get('return_type', {}).get('text'),
+            "parameters": captures.get('params', {}).get('text'),
+            "full_range": group['range']
+        }
+        structure["functions"].append(fn_info)
+    
+    # 2. Extract classes
+    class_query = """
+    (class_specifier
+        name: (type_identifier) @class_name
+        body: (field_declaration_list) @class_body
+    ) @class_spec
+    """
+    
+    class_results = query(tree_id, class_query)
+    
+    # Group by class
+    class_groups = []
+    for result in class_results:
+        if result['name'] == 'class_spec':
+            class_groups.append({
+                'range': result['byte_range'],
+                'captures': {result['name']: result}
+            })
+    
+    # Assign captures to classes
+    for result in class_results:
+        if result['name'] != 'class_spec':
+            capture_start, capture_end = result['byte_range']
+            
+            for group in class_groups:
+                group_start, group_end = group['range']
+                if capture_start >= group_start and capture_end <= group_end:
+                    group['captures'][result['name']] = result
+                    break
+    
+    # Convert to class info
+    for group in class_groups:
+        captures = group['captures']
+        class_info = {
+            "name": captures.get('class_name', {}).get('text', 'unknown'),
+            "type": "class",
+            "byte_range": group['range'],
+            "members": [],
+            "methods": []
+        }
+        structure["classes"].append(class_info)
+    
+    # 3. Extract structs  
+    struct_query = """
+    (struct_specifier
+        name: (type_identifier) @struct_name
+        body: (field_declaration_list) @struct_body
+    ) @struct_spec
+    """
+    
+    struct_results = query(tree_id, struct_query)
+    
+    # Group by struct
+    struct_groups = []
+    for result in struct_results:
+        if result['name'] == 'struct_spec':
+            struct_groups.append({
+                'range': result['byte_range'],
+                'captures': {result['name']: result}
+            })
+    
+    # Assign captures to structs
+    for result in struct_results:
+        if result['name'] != 'struct_spec':
+            capture_start, capture_end = result['byte_range']
+            
+            for group in struct_groups:
+                group_start, group_end = group['range']
+                if capture_start >= group_start and capture_end <= group_end:
+                    group['captures'][result['name']] = result
+                    break
+    
+    # Convert to struct info
+    for group in struct_groups:
+        captures = group['captures']
+        struct_info = {
+            "name": captures.get('struct_name', {}).get('text', 'unknown'),
+            "type": "struct",
+            "byte_range": group['range'],
+            "members": [],
+            "methods": []
+        }
+        structure["structs"].append(struct_info)
+    
+    # 4. Extract includes
+    include_query = """
+    (preproc_include
+        path: (string_literal) @include_path_str
+    ) @include
+    
+    (preproc_include
+        path: (system_lib_string) @include_path_sys
+    ) @include
+    """
+    
+    include_results = query(tree_id, include_query)
+    
+    # Group by include directive
+    include_groups = []
+    for result in include_results:
+        if result['name'] == 'include':
+            include_groups.append({
+                'range': result['byte_range'],
+                'captures': {result['name']: result}
+            })
+    
+    # Assign paths to includes
+    for result in include_results:
+        if result['name'] in ['include_path_str', 'include_path_sys']:
+            capture_start, capture_end = result['byte_range']
+            
+            for group in include_groups:
+                group_start, group_end = group['range']
+                if capture_start >= group_start and capture_end <= group_end:
+                    group['captures']['path'] = result
+                    group['captures']['is_system'] = result['name'] == 'include_path_sys'
+                    break
+    
+    # Convert to include info
+    for group in include_groups:
+        captures = group['captures']
+        if 'path' in captures:
+            path_text = captures['path']['text']
+            clean_path = path_text.strip('"<>')
+            structure["includes"].append({
+                "path": clean_path,
+                "raw": path_text,
+                "byte_range": group['range'],
+                "is_system": captures.get('is_system', False)
+            })
+    
+    # 5. Extract namespaces
+    namespace_query = """
+    (namespace_definition
+        name: (namespace_identifier) @ns_name
+        body: (declaration_list) @ns_body
+    ) @namespace
+    """
+    
+    namespace_results = query(tree_id, namespace_query)
+    
+    # Group by namespace
+    namespace_groups = []
+    for result in namespace_results:
+        if result['name'] == 'namespace':
+            namespace_groups.append({
+                'range': result['byte_range'],
+                'captures': {result['name']: result}
+            })
+    
+    # Assign captures to namespaces
+    for result in namespace_results:
+        if result['name'] != 'namespace':
+            capture_start, capture_end = result['byte_range']
+            
+            for group in namespace_groups:
+                group_start, group_end = group['range']
+                if capture_start >= group_start and capture_end <= group_end:
+                    group['captures'][result['name']] = result
+                    break
+    
+    # Convert to namespace info
+    for group in namespace_groups:
+        captures = group['captures']
+        ns_info = {
+            "name": captures.get('ns_name', {}).get('text', 'anonymous'),
+            "byte_range": group['range'],
+            "body_range": captures.get('ns_body', {}).get('byte_range')
+        }
+        structure["namespaces"].append(ns_info)
+    
+    # 6. Extract typedefs
+    typedef_query = """
+    (type_definition
+        type: (_) @original_type
+        declarator: (type_identifier) @alias
+    ) @typedef
+    """
+    
+    typedef_results = query(tree_id, typedef_query)
+    
+    # Group by typedef
+    typedef_groups = []
+    for result in typedef_results:
+        if result['name'] == 'typedef':
+            typedef_groups.append({
+                'range': result['byte_range'],
+                'captures': {result['name']: result}
+            })
+    
+    # Assign captures to typedefs
+    for result in typedef_results:
+        if result['name'] != 'typedef':
+            capture_start, capture_end = result['byte_range']
+            
+            for group in typedef_groups:
+                group_start, group_end = group['range']
+                if capture_start >= group_start and capture_end <= group_end:
+                    group['captures'][result['name']] = result
+                    break
+    
+    # Convert to typedef info
+    for group in typedef_groups:
+        captures = group['captures']
+        typedef_info = {
+            "alias": captures.get('alias', {}).get('text', 'unknown'),
+            "original_type": captures.get('original_type', {}).get('text'),
+            "byte_range": group['range']
+        }
+        structure["typedefs"].append(typedef_info)
+    
+    # 7. Extract macros
+    macro_query = """
+    (preproc_def
+        name: (identifier) @macro_name
+        value: (preproc_arg) @macro_value
+    ) @macro
+    """
+    
+    macro_results = query(tree_id, macro_query)
+    
+    # Group by macro
+    macro_groups = []
+    for result in macro_results:
+        if result['name'] == 'macro':
+            macro_groups.append({
+                'range': result['byte_range'],
+                'captures': {result['name']: result}
+            })
+    
+    # Assign captures to macros
+    for result in macro_results:
+        if result['name'] != 'macro':
+            capture_start, capture_end = result['byte_range']
+            
+            for group in macro_groups:
+                group_start, group_end = group['range']
+                if capture_start >= group_start and capture_end <= group_end:
+                    group['captures'][result['name']] = result
+                    break
+    
+    # Convert to macro info
+    for group in macro_groups:
+        captures = group['captures']
+        macro_info = {
+            "name": captures.get('macro_name', {}).get('text', 'unknown'),
+            "value": captures.get('macro_value', {}).get('text', '').strip() if 'macro_value' in captures else None,
+            "byte_range": group['range']
+        }
+        structure["macros"].append(macro_info)
+    
+    # 8. Extract global variables (simplified - declarations at file scope)
+    var_query = """
+    (declaration
+        type: (_) @var_type
+        declarator: (identifier) @var_name
+    ) @var_decl
+    """
+    
+    # This is a simplified approach - in reality, we'd need to check
+    # that these declarations are at file scope, not inside functions/classes
+    
+    # Add summary statistics
+    structure["summary"] = {
+        "total_functions": len(structure["functions"]),
+        "function_definitions": sum(1 for f in structure["functions"] if f.get("is_definition", False)),
+        "function_declarations": sum(1 for f in structure["functions"] if not f.get("is_definition", False)),
+        "total_classes": len(structure["classes"]),
+        "total_structs": len(structure["structs"]),
+        "total_includes": len(structure["includes"]),
+        "system_includes": sum(1 for i in structure["includes"] if i.get("is_system", False)),
+        "local_includes": sum(1 for i in structure["includes"] if not i.get("is_system", False)),
+        "total_namespaces": len(structure["namespaces"]),
+        "total_global_vars": len(structure["global_variables"]),
+        "total_typedefs": len(structure["typedefs"]),
+        "total_macros": len(structure["macros"])
+    }
+    
+    print(f"[Tree-sitter Debug] Structure summary: {structure['summary']}")
+    return structure
+      
+def apply_targeted_edits(file_path: str, edits: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Apply a list of targeted edits to a file
+    """
+    from tree_sitter_editor import TreeSitterEditor, CodeEdit
+    
+    editor = TreeSitterEditor()
+    
+    # Convert dict edits to CodeEdit objects
+    edit_objects = []
+    for edit in edits:
+        edit_objects.append(CodeEdit(
+            operation=edit["operation"],
+            target_type=edit["target_type"],
+            target_name=edit["target_name"],
+            content=edit.get("content"),
+            location_hint=edit.get("location_hint")
+        ))
+    
+    result = editor.apply_edits(file_path, edit_objects)
+    
+    return {
+        "success": result.success,
+        "message": result.message,
+        "new_content": result.new_content
+    }
 
 # Add these new tools to AVAILABLE_TOOLS:
 """
@@ -1022,11 +1411,7 @@ def format_doc_results(results: Dict[str, Dict]) -> str:
             "required": ["error_output"]
         }
     }
-"""
-# --- Updated Tool Definitions for the API ---
-
-AVAILABLE_TOOLS = [
-    {
+ {
         "name": "extract_symbols_from_files",
         "description": "Extracts symbols (i.e classes, functions, and structs) from one or more C++ files in the output directory. Accepts either a single filepath or a list of filepaths. Returns all symbols in one call.",
         "input_schema": {
@@ -1041,27 +1426,7 @@ AVAILABLE_TOOLS = [
             "required": ["filepaths"],
         },
     },
-    {
-        "name": "find_api_usages",
-        "description": "Searches for usage examples of one or more API functions. Accepts either a single function name or a list. Returns examples for all requested functions in one call.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "function_names": {
-                    "type": ["string", "array"],
-                    "description": "Single function name or list of API functions to find, e.g., 'create_program' or ['create_program', 'CreateCircularBuffer', 'run_operation']",
-                    "items": {"type": "string"} if "array" else None,
-                },
-                "max_examples_per_function": {
-                    "type": "integer",
-                    "description": "Maximum examples to return per function (default: 3)",
-                    "default": 3,
-                },
-            },
-            "required": ["function_names"],
-        },
-    },
-    {
+{
         "name": "resolve_namespace_and_verify",
         "description": "Resolves the correct namespace and include path for C++ symbols by searching the codebase. Can optionally verify with compilation. Essential for fixing 'no matching function' and namespace errors.",
         "input_schema": {
@@ -1106,6 +1471,75 @@ AVAILABLE_TOOLS = [
             "required": ["api_names"],
         },
     },
+"""
+# --- Updated Tool Definitions for the API ---
+
+AVAILABLE_TOOLS = [
+    {
+        "name": "find_api_usages",
+        "description": "Searches for usage examples of one or more API functions. Accepts either a single function name or a list. Returns examples for all requested functions in one call.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "function_names": {
+                    "oneOf": [
+                        {"type": "string"},
+                        {"type": "array", "items": {"type": "string"}}
+                    ],
+                    "description": "Single function name or list of API functions to find, e.g., 'create_program' or ['create_program', 'CreateCircularBuffer', 'run_operation']"
+                },
+                "max_examples_per_function": {
+                    "type": "integer",
+                    "description": "Maximum examples to return per function (default: 3)",
+                    "default": 3
+                }
+            },
+            "required": ["function_names"]
+        }
+    },
+    {
+        "name": "parse_and_analyze_code",
+        "description": "Parse a C++ file and analyze its tree-sitter structure",
+        "input_schema": {  # Changed from "parameters" to "input_schema"
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the C++ file to analyze"
+                }
+            },
+            "required": ["file_path"]
+        }
+    },
+    {
+        "name": "apply_targeted_edits",
+        "description": "Apply targeted edits to a C++ file",
+        "input_schema": {  # Changed from "parameters" to "input_schema"
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the file to edit"
+                },
+                "edits": {
+                    "type": "array",
+                    "description": "List of edit operations",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "operation": {"type": "string", "description": "Type of edit: insert, delete, replace, modify"},
+                            "target_type": {"type": "string", "description": "Type of target: function, class, include, namespace, member"},
+                            "target_name": {"type": "string", "description": "Name of the target to edit"},
+                            "content": {"type": "string", "description": "New content for insert/replace/modify operations"},
+                            "location_hint": {"type": "string", "description": "Where to place the edit, e.g., 'inside:namespace_name'"}
+                        },
+                        "required": ["operation", "target_type", "target_name"]
+                    }
+                }
+            },
+            "required": ["file_path", "edits"]
+        }
+    }
 ]
 
 # Add to TOOL_EXECUTORS:
@@ -1114,10 +1548,12 @@ AVAILABLE_TOOLS = [
 
 TOOL_EXECUTORS = {
     # "find_files_in_repository": find_files_in_repository,
-    "extract_symbols_from_files": extract_symbols_from_files,
+    #"extract_symbols_from_files": extract_symbols_from_files,
     # "read_ttnn_example_files": read_ttnn_example_files,
     "find_api_usages": find_api_usages,
-    "resolve_namespace_and_verify": resolve_namespace_and_verify,
-    "search_tt_metal_docs": search_tt_metal_docs
+    "parse_and_analyze_code": parse_and_analyze_code,
+    "apply_targeted_edits": apply_targeted_edits
+    #"resolve_namespace_and_verify": resolve_namespace_and_verify,
+    #"search_tt_metal_docs": search_tt_metal_docs
     # "check_common_namespace_issues": check_common_namespace_issues
 }

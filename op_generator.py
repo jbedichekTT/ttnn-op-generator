@@ -12,257 +12,22 @@ from prompts import *
 from tools import *
 from persistent_prompt_refiner import PersistentPromptRefiner
 from test_debugger import TestDebugger
+from tree_sitter_editor import CodeEdit
 
 
 # Configuration
 API_URL = "https://api.anthropic.com/v1/messages"
 MODEL = "claude-sonnet-4-20250514"
-BUILD_RETRIES = 10
+BUILD_RETRIES = 3
 MAX_TOKENS = 8192
 THINKING_TOKENS = 3096
 API_KEY = ""
 DEBUG_ONLY = 1
 REFINEMENT_ITERS = 4
-TOOL_USE_DELAY = 40  # Delay between tool use and tool result, to avoid hitting the API limit too quickly
+TOOL_USE_DELAY = 0  # Delay between tool use and tool result, to avoid hitting the API limit too quickly
 COMPLETE_PARTIAL_OP = 0
-
-
-@dataclass
-class SymbolDependency:
-    """Track symbol dependencies between files"""
-
-    symbol: str
-    defined_in: str
-    used_in: List[str]
-    symbol_type: str  # 'function', 'class', 'struct', 'namespace'
-
-
-@dataclass
-class ExtractedPattern:
-    """Pattern extracted from existing code"""
-
-    pattern_type: str  # 'api', 'structure', 'include', 'namespace'
-    pattern: str
-    example: str
-    file_type: str
-
-
-class CodeAnalyzer:
-    """Analyzes existing TT-Metal code to extract patterns"""
-
-    def __init__(self, tt_metal_path: Path):
-        self.tt_metal_path = tt_metal_path
-        self.patterns = {}
-        self.discovered_apis = {}
-
-    def analyze_existing_operation(self, operation_name: str) -> Dict[str, List[ExtractedPattern]]:
-        """Analyze an existing operation to extract patterns"""
-        print(f"[Analysis] Analyzing existing operation: {operation_name}")
-        patterns = {"header": [], "implementation": [], "device_op": [], "pybind": [], "cmake": []}
-        ops_path = self.tt_metal_path / "ttnn/cpp/ttnn/operations"
-        for category in ["eltwise", "unary", "binary", "core"]:
-            op_dir = ops_path / category / operation_name
-            if op_dir.exists():
-                patterns.update(self._analyze_operation_directory(op_dir, operation_name))
-                break
-        return patterns
-
-    def _analyze_operation_directory(self, op_dir: Path, op_name: str) -> Dict[str, List[ExtractedPattern]]:
-        """Analyze all files in an operation directory"""
-        patterns = {}
-        header_file = op_dir / f"{op_name}.hpp"
-        if header_file.exists():
-            patterns["header"] = self._extract_header_patterns(header_file)
-        impl_file = op_dir / f"{op_name}.cpp"
-        if impl_file.exists():
-            patterns["implementation"] = self._extract_implementation_patterns(impl_file)
-        device_op_file = op_dir / "device" / f"{op_name}_op.hpp"
-        if device_op_file.exists():
-            patterns["device_op"] = self._extract_device_op_patterns(device_op_file)
-        pybind_file = op_dir / f"{op_name}_pybind.cpp"
-        if pybind_file.exists():
-            patterns["pybind"] = self._extract_pybind_patterns(pybind_file)
-        return patterns
-
-    def _extract_header_patterns(self, file_path: Path) -> List[ExtractedPattern]:
-        patterns = []
-        content = file_path.read_text()
-        namespace_match = re.search(r"namespace\s+([\w:]+)\s*{", content)
-        if namespace_match:
-            patterns.append(
-                ExtractedPattern(
-                    pattern_type="namespace",
-                    pattern=namespace_match.group(1),
-                    example=namespace_match.group(0),
-                    file_type="header",
-                )
-            )
-        func_pattern = r"([\w:]+)\s+(\w+)\s*\([^)]*\)\s*;"
-        for match in re.finditer(func_pattern, content):
-            patterns.append(
-                ExtractedPattern(
-                    pattern_type="function_declaration",
-                    pattern=f"{match.group(1)} {match.group(2)}(...)",
-                    example=match.group(0),
-                    file_type="header",
-                )
-            )
-        include_pattern = r'#include\s+[<"]([^>"]+)[>"]'
-        includes = set()
-        for match in re.finditer(include_pattern, content):
-            includes.add(match.group(1))
-        if includes:
-            patterns.append(
-                ExtractedPattern(
-                    pattern_type="includes",
-                    pattern="common_includes",
-                    example="\n".join([f'#include "{inc}"' for inc in list(includes)[:5]]),
-                    file_type="header",
-                )
-            )
-        return patterns
-
-    def _extract_implementation_patterns(self, file_path: Path) -> List[ExtractedPattern]:
-        patterns = []
-        content = file_path.read_text()
-        dispatch_pattern = r"operation::run\s*\([^)]+\)"
-        if re.search(dispatch_pattern, content):
-            match = re.search(dispatch_pattern, content)
-            patterns.append(
-                ExtractedPattern(
-                    pattern_type="dispatch",
-                    pattern="operation::run",
-                    example=match.group(0),
-                    file_type="implementation",
-                )
-            )
-        validation_pattern = r"TT_FATAL\s*\([^;]+\);"
-        validations = [match.group(0) for match in re.finditer(validation_pattern, content)]
-        if validations:
-            patterns.append(
-                ExtractedPattern(
-                    pattern_type="validation", pattern="TT_FATAL", example=validations[0], file_type="implementation"
-                )
-            )
-        return patterns
-
-    def _extract_device_op_patterns(self, file_path: Path) -> List[ExtractedPattern]:
-        patterns = []
-        content = file_path.read_text()
-        struct_pattern = r"struct\s+(\w+)\s*{([^}]+)}"
-        match = re.search(struct_pattern, content, re.DOTALL)
-        if match:
-            patterns.append(
-                ExtractedPattern(
-                    pattern_type="device_op_struct",
-                    pattern=f"struct {match.group(1)}",
-                    example=match.group(0)[:200] + "...",
-                    file_type="device_op",
-                )
-            )
-        method_pattern = (
-            r"(void|std::vector<[\w<>]+>)\s+(validate|compute_output_specs|create_output_tensors|create_program)\s*\("
-        )
-        for match in re.finditer(method_pattern, content):
-            patterns.append(
-                ExtractedPattern(
-                    pattern_type="device_op_method",
-                    pattern=f"{match.group(1)} {match.group(2)}",
-                    example=match.group(0),
-                    file_type="device_op",
-                )
-            )
-        return patterns
-
-    def _extract_pybind_patterns(self, file_path: Path) -> List[ExtractedPattern]:
-        patterns = []
-        content = file_path.read_text()
-        bind_pattern = r"module\.def\s*\([^;]+\);"
-        for match in re.finditer(bind_pattern, content, re.DOTALL):
-            patterns.append(
-                ExtractedPattern(
-                    pattern_type="pybind_def",
-                    pattern="module.def",
-                    example=match.group(0)[:150] + "...",
-                    file_type="pybind",
-                )
-            )
-            break
-        return patterns
-
-    def discover_ttnn_apis(self) -> Dict[str, List[str]]:
-        print("[Discovery] Scanning for TTNN APIs...")
-        apis = {"registration_macros": [], "operation_functions": [], "tensor_types": [], "utility_functions": []}
-        headers_to_scan = [
-            "ttnn/decorators.hpp",
-            "ttnn/operation.hpp",
-            "ttnn/tensor/tensor.hpp",
-            "ttnn/operations/core/core.hpp",
-        ]
-        for header in headers_to_scan:
-            header_path = self.tt_metal_path / header
-            if header_path.exists():
-                content = header_path.read_text()
-                macro_pattern = r"#define\s+(REGISTER_\w+|register_\w+)"
-                for match in re.finditer(macro_pattern, content):
-                    apis["registration_macros"].append(match.group(1))
-                func_pattern = r"(template\s*<[^>]+>\s*)?([\w:]+)\s+(register_\w+|create_\w+|run)\s*\("
-                for match in re.finditer(func_pattern, content):
-                    apis["operation_functions"].append(f"{match.group(3)}")
-        return apis
-
-
-class SymbolTracker:
-    """Tracks symbol dependencies across generated files"""
-
-    def __init__(self):
-        self.symbols: Dict[str, SymbolDependency] = {}
-        self.file_symbols: Dict[str, Set[str]] = {}
-
-    def add_symbol_definition(self, symbol: str, file: str, symbol_type: str):
-        if symbol not in self.symbols:
-            self.symbols[symbol] = SymbolDependency(symbol=symbol, defined_in=file, used_in=[], symbol_type=symbol_type)
-        else:
-            self.symbols[symbol].defined_in = file
-        if file not in self.file_symbols:
-            self.file_symbols[file] = set()
-        self.file_symbols[file].add(symbol)
-
-    def add_symbol_usage(self, symbol: str, file: str):
-        if symbol not in self.symbols:
-            self.symbols[symbol] = SymbolDependency(
-                symbol=symbol, defined_in="<undefined>", used_in=[file], symbol_type="unknown"
-            )
-        elif file not in self.symbols[symbol].used_in:
-            self.symbols[symbol].used_in.append(file)
-
-    def validate_symbols(self) -> List[str]:
-        return [
-            f"Symbol '{symbol}' used in {dep.used_in} but never defined"
-            for symbol, dep in self.symbols.items()
-            if dep.defined_in == "<undefined>"
-        ]
-
-    def extract_symbols_from_code(self, code: str, file_type: str) -> Tuple[Set[str], Set[str]]:
-        defined, used = set(), set()
-        if file_type == "header":
-            func_pattern = r"(?:constexpr\s+)?(?:inline\s+)?(?:auto|[\w:]+)\s+(\w+)\s*\([^)]*\)"
-            for match in re.finditer(func_pattern, code):
-                if not match.group(1).startswith("_"):
-                    defined.add(match.group(1))
-            struct_pattern = r"(?:struct|class)\s+(\w+)"
-            for match in re.finditer(struct_pattern, code):
-                defined.add(match.group(1))
-        elif file_type == "implementation":
-            func_impl_pattern = r"[\w:]+\s+(?:[\w:]+::)?(\w+)\s*\([^)]*\)\s*{"
-            for match in re.finditer(func_impl_pattern, code):
-                defined.add(match.group(1))
-            call_pattern = r"(\w+)\s*\("
-            for match in re.finditer(call_pattern, code):
-                if match.group(1) not in ["if", "while", "for", "switch", "return"]:
-                    used.add(match.group(1))
-        return defined, used
-
+USE_REFINMENT_DB = 0
+ADD_TO_CMAKE = 0
 
 class TTNNOperationAgent:
     """Agent for generating, building, and debugging TTNN operations."""
@@ -308,13 +73,7 @@ class TTNNOperationAgent:
             "op-hpp": {"name": f"device/{self.operation_name}_op.hpp", "code": ""},
         }
 
-        self.analyzer = CodeAnalyzer(self.tt_metal_path)
-        self.symbol_tracker = SymbolTracker()
-        self.discovered_patterns = {}
-        self.discovered_apis = {}
-        self.generated_code = {}
-
-        self.prompt_refiner = PersistentPromptRefiner(self.operation_name, db_path=refinement_db_path)
+        self.prompt_refiner = PersistentPromptRefiner(self.operation_name, db_path=refinement_db_path, load_from_db=USE_REFINMENT_DB)
         self.generation_attempt = 0
 
         self.test_debugger = TestDebugger(self.tt_metal_path, self.operation_name)
@@ -361,37 +120,12 @@ class TTNNOperationAgent:
         finally:
             os.chdir(original_dir)
 
-    def get_generation(self, prompt, max_tokens=MAX_TOKENS, is_fix=False) -> str:
-        """Call Claude API to generate code."""
-        headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
-        system_prompt = (
-            f"You are an expert in Tenstorrent's TT-Metal SDK, generating a CUSTOM TTNN operation '{self.operation_name}'.\n"
-            f"Use EXACT naming: operation '{self.operation_name}', Python function '{self.python_function_name}'.\n"
-        )
-        if is_fix:
-            final_prompt = f"COMPILATION ERROR FIXES NEEDED:\n{prompt}\n\nGenerate the corrected code."
-        else:
-            final_prompt = prompt
-        payload = {
-            "model": self.model,
-            "max_tokens": max_tokens,
-            "system": system_prompt,
-            "messages": [{"role": "user", "content": final_prompt}],
-        }
-        stage = "Fixing" if is_fix else "Generating"
-        print(f"[{stage}] Calling LLM for '{self.operation_name}' (Iteration {self.iteration})")
-        try:
-            response = requests.post(API_URL, headers=headers, data=json.dumps(payload))
-            response.raise_for_status()
-            return response.json().get("content", [{}])[0].get("text", "")
-        except Exception as e:
-            print(f"[Error] API call failed: {e}")
-            return ""
-
     def parse_response(self, response_text: str) -> str:
         """Extract code from Claude's response."""
         pattern = r"```(?:\w+)?\n([\s\S]*?)\n```"
         matches = re.findall(pattern, response_text)
+        if not matches:
+            print(f"[Parsing Error] No code block found in response: {response_text}")
         return matches[0].strip() if matches else ""
 
     def save_file(self, file_key: str, code: str):
@@ -403,24 +137,6 @@ class TTNNOperationAgent:
             f.write(code)
         print(f"  ✓ Saved: {file_config['name']}")
         self.files[file_key]["code"] = code
-
-    def combine_context(self, files):
-        """Combine context from multiple files into a single string for generation."""
-        output = files[0]
-        for file in files[1:]:
-            output += f"\n--- Make your work compatible with this following material, this is the {file['name']} implementation that you need ---\n{file['code']}"
-        return output
-
-    def generate_prompt(self, context, file) -> str:
-        """Generate the base prompt emphasizing unique operation generation."""
-        return f"""Generate a complete and UNIQUE TTNN eltwise operation for '{self.operation_type}' named '{self.operation_name}'.
-        - Python function: ttnn.operations.{self.python_function_name}(a, b)
-        - C++ class: {self.operation_class_name}
-        CRITICAL: Must build successfully and use UNIQUE naming. Add debug markers to verify custom code execution.
-        CONTEXT: {context}
-        Generate the code for the file: {file['name']}
-        MAKE SURE THE GENERATED CODE IS ENCLOSED IN ```, AS IN: ``` <code> ```
-        """
 
     def add_operation_to_cmake(self, cmake_path: str, operation_name: str) -> bool:
         """Add a new operation to the main TTNN CMakeLists.txt"""
@@ -447,154 +163,6 @@ class TTNNOperationAgent:
             return True
         except Exception as e:
             print(f"[ERROR] Failed to modify CMake file: {e}")
-            return False
-
-    def analyze_ground_truth(self):
-        """Analyze existing operations to understand patterns"""
-        print("\n[Phase 0] Ground Truth Analysis")
-        reference_ops = ["add", "multiply", "subtract"]
-        for op in reference_ops:
-            patterns = self.analyzer.analyze_existing_operation(op)
-            if patterns and any(patterns.values()):
-                self.discovered_patterns[op] = patterns
-                print(f"✓ Analyzed {op} operation")
-        self.discovered_apis = self.analyzer.discover_ttnn_apis()
-        print(f"✓ Discovered {sum(len(v) for v in self.discovered_apis.values())} TTNN APIs")
-        self._build_dynamic_contexts()
-
-    def _build_dynamic_contexts(self):
-        """Build contexts from discovered patterns"""
-        print("\n[Context Building] Creating dynamic contexts from analysis")
-        self.dynamic_context = {
-            "header_examples": [],
-            "implementation_examples": [],
-            "device_op_examples": [],
-            "pybind_examples": [],
-        }
-        for op, patterns in self.discovered_patterns.items():
-            for file_type, pattern_list in patterns.items():
-                for pattern in pattern_list:
-                    if file_type == "header":
-                        self.dynamic_context["header_examples"].append(pattern.example)
-                    elif file_type == "implementation":
-                        self.dynamic_context["implementation_examples"].append(pattern.example)
-                    elif file_type == "device_op":
-                        self.dynamic_context["device_op_examples"].append(pattern.example)
-                    elif file_type == "pybind":
-                        self.dynamic_context["pybind_examples"].append(pattern.example)
-
-    def generate_with_validation(self, prompt: str, file_key: str) -> str:
-        """Generate code with immediate validation"""
-        enhanced_prompt = self._enhance_prompt_with_discoveries(prompt, file_key)
-        response = self.get_generation(enhanced_prompt)
-        code = self.parse_response(response)
-        self.generated_code[file_key] = code
-        return code
-
-    def _enhance_prompt_with_discoveries(self, prompt: str, file_key: str) -> str:
-        """Enhance prompt with discovered patterns"""
-        enhancement = "\n\nBASED ON ANALYSIS OF EXISTING OPERATIONS:\n"
-        file_type = "header" if file_key in ["hpp", "op-hpp"] else "implementation"
-        if file_type in self.dynamic_context:
-            examples = self.dynamic_context.get(f"{file_type}_examples", [])
-            if examples:
-                enhancement += f"Example patterns:\n"
-                for i, example in enumerate(examples[:2]):
-                    enhancement += f"Example {i+1}:\n```cpp\n{example}\n```\n"
-        return prompt + enhancement
-
-    def _process_build_errors_for_debugging(self, raw_error_output: str) -> str:
-        """Process raw build output to extract and format errors for LLM analysis."""
-        lines = raw_error_output.split("\n")
-        cpp_errors = self._extract_cpp_compilation_errors(lines)
-        cmake_errors = self._extract_cmake_errors(lines)
-        all_error_blocks = cpp_errors + cmake_errors
-        if not all_error_blocks:
-            return raw_error_output[-4000:]
-        return "\n\n=== ERROR BLOCK ===\n\n".join(all_error_blocks)
-
-    def _extract_cpp_compilation_errors(self, lines: List[str]) -> List[str]:
-        """Extract C++ compilation errors with file:line:column format"""
-        error_blocks = []
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            cpp_error_pattern = r"(/[^:]+):(\d+):(\d+):\s+(error|fatal error):"
-            match = re.search(cpp_error_pattern, line)
-            if match:
-                error_block = []
-                context_start = max(0, i - 3)
-                error_block.extend(l for l in lines[context_start:i] if l.strip())
-                error_block.append(line)
-                i += 1
-                while i < len(lines) and (
-                    not re.search(cpp_error_pattern, lines[i]) and not lines[i].strip().startswith("ninja:")
-                ):
-                    if lines[i].strip():
-                        error_block.append(lines[i])
-                    i += 1
-                error_blocks.append("\n".join(error_block))
-            else:
-                i += 1
-        return error_blocks
-
-    def _extract_cmake_errors(self, lines: List[str]) -> List[str]:
-        """Extract CMake errors with CMake Error format"""
-        error_blocks = []
-        for i, line in enumerate(lines):
-            if "cmake error" in line.lower() or line.strip().startswith("CMake Error"):
-                error_blocks.append("\n".join(lines[i : min(len(lines), i + 20)]))
-        return error_blocks
-
-    def _identify_problematic_files(self, error_output: str) -> List[str]:
-        """Use LLM to identify which files need to be regenerated."""
-        print("[Debug Analysis] Using LLM to identify problematic files...")
-        analysis_prompt = f"""You are analyzing build errors for '{self.operation_name}'.
-            BUILD ERRORS: {error_output}
-            AVAILABLE FILES: {', '.join(self.files.keys())}
-            Analyze the errors and determine which files need to be regenerated.
-            Return ONLY the file keys that need to be regenerated, enclosed in ``` like this:
-            ```
-            cpp
-            hpp
-            ```
-            Return only the relevant files, no other text."""
-        try:
-            response = self.get_generation(analysis_prompt, max_tokens=1024)
-            file_list_str = self.parse_response(response)
-            if not file_list_str:
-                return []
-            identified_files = [line.strip() for line in file_list_str.split("\n") if line.strip() in self.files]
-            print(f"[Debug Analysis] LLM identified files: {identified_files}")
-            return identified_files
-        except Exception as e:
-            print(f"[Debug Analysis Error] Failed to get LLM analysis: {e}")
-            return []
-
-    def _regenerate_problematic_files(self, file_keys: List[str], error_output: str) -> bool:
-        """Regenerate specific files with error context to fix build issues."""
-        print(f"[Debug Regeneration] Regenerating {len(file_keys)} files with error context")
-        regenerated_count = 0
-        for file_key in file_keys:
-            if file_key in self.files:
-                if self._regenerate_single_file_with_errors(file_key, error_output):
-                    regenerated_count += 1
-        return regenerated_count > 0
-
-    def _regenerate_single_file_with_errors(self, file_key: str, error_output: str) -> bool:
-        """Regenerate a single file using error context and original file content."""
-        try:
-            file_config = self.files[file_key]
-            file_path = self.output_dir / file_config["name"]
-            current_content = file_path.read_text() if file_path.exists() else ""
-            fix_prompt = self._create_comprehensive_fix_prompt(file_key, current_content, error_output)
-            fixed_code = self.parse_response(self.get_generation(fix_prompt, is_fix=True))
-            if not fixed_code:
-                return False
-            self.save_file(file_key, fixed_code)
-            return True
-        except Exception as e:
-            print(f"[Debug] Error regenerating {file_key}: {e}")
             return False
 
     def _create_comprehensive_fix_prompt(self, file_key: str, current_content: str, error_output: str) -> str:
@@ -628,14 +196,24 @@ class TTNNOperationAgent:
 
         headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
 
-        system_prompt = (
-            f"You are an expert in Tenstorrent's TT-Metal SDK. You are generating a CUSTOM TTNN operation '{self.operation_name}'.\n"
-            "Your primary goal is to generate correct, complete, and buildable code.\n"
-            # "While writing an #include directive for a file, you may use the 'find_file_in_repository' tool to verify its exact path.\n"
-            "To resolve undefined function errors, use 'extract_symbols_from_file' on the relevant header to get the correct signature.\n"
-            "Use 'find_api_usage' to find real usage examples of a specific API function. Use resolve_namespace_and_verify to verify namespace usage and include paths, \n"
-            "it should be called for every import and namespace. Use 'search_tt_metal_docs' to understand the purpose/function of a given API. \n"
-        )
+        system_prompt = """
+        You are an expert in Tenstorrent's TT-Metal SDK. You are generating a CUSTOM TTNN operation '{self.operation_name}'.
+        Your goal is to generate code which compiles and correctly defines the desired operation.  If you wish to view an example operation,
+        you can call tools on this one: /home/user/tt-metal/ttnn/cpp/ttnn/operations/matmul.  It contains these files:
+        
+        matmul.cpp
+        matmul.hpp
+        device/matmul_op.hpp
+        device/matmul_op.cpp
+        device/matmul_op_multi_core_program_factory.cpp
+        device/kernels/compute/bmm.cpp
+        device/kernels/dataflow/reader_bmm_tile_layout.cpp
+        device/kernels/dataflow/writer_bmm_tile_layout.cpp
+
+        Use this as a reference on how to use APIs, don't copy it but instead analyze and understand it.  
+        Don't try and read the eltwise operations as examples, it won't be useful.
+        """
+                
 
         # The payload for the API call, including the tools and thinking parameter
         payload = {
@@ -1177,57 +755,6 @@ class TTNNOperationAgent:
             self.prompt_refiner.mark_build_success()
         return success
 
-    '''
-    def debug_build_loop(self) -> Tuple[bool, str]:
-        """
-        Runs the build-and-fix loop, using tools to diagnose and fix build errors.
-        Also refines prompts based on errors for future use.
-        """
-        print(f"\n[Debug Loop] Starting intelligent build debugging...")
-        for i in range(self.build_retries):
-            self.iteration = i + 1
-            print(f"\n[Debug Iteration {self.iteration}/{self.build_retries}]")
-
-            success, raw_error_output = self.run_build_verification()
-            if success:
-                print(f"[Success] Build succeeded after {self.iteration} iterations!")
-                self.prompt_refiner.mark_build_success()
-                return True, "Build successful"
-
-            # Clean the error output
-            cleaned_errors = self.clean_build_errors(raw_error_output)
-            critical_errors = self.extract_critical_errors(raw_error_output)
-
-            # Refine prompts based on these errors for future use
-            current_file_contents = {
-                key: data['code'] for key, data in self.files.items() if data['code']
-            }
-            self.prompt_refiner.analyze_errors_and_refine_prompts(
-                cleaned_errors, current_file_contents, self.api_key, self.model
-            )
-            print("[Prompt Refiner]" + self.prompt_refiner.get_refinement_summary())
-
-            print(f"\n[Debug] Cleaned error summary:")
-            print("="*60)
-            print(cleaned_errors)
-            print("="*60)
-
-            # Create fix prompt
-            fix_prompt = self._create_tool_based_debugging_prompt(cleaned_errors, critical_errors)
-            messages = [{"role": "user", "content": fix_prompt}]
-
-            print("\n[Debug] Asking LLM to analyze build errors and propose fixes...")
-            response_text = self.get_generation_with_tools(messages)
-
-            # Apply the fixes
-            self.apply_code_fixes_from_llm_response(response_text)
-
-        print(f"[Debug Failed] Could not fix the build after {self.build_retries} attempts.")
-        print("\n[Final Refinement Summary]")
-        print(self.prompt_refiner.get_refinement_summary())
-        return False, "Build debugging failed"
-    '''
-
     def generate_with_refined_prompt(self, base_prompt: str, file_key: str, context: str = "") -> str:
         """Generate code using a prompt that's been refined based on previous errors."""
         self.generation_attempt += 1
@@ -1413,71 +940,6 @@ class TTNNOperationAgent:
         }
         return hints.get(error_type, "Analyze the error carefully and check common failure points.")
 
-    def debug_build_loop(self) -> Tuple[bool, str]:
-        """
-        Runs the build-and-fix loop, using tools to diagnose and fix build errors.
-        Also refines prompts based on errors for future use.
-        """
-        print(f"\n[Debug Loop] Starting intelligent build debugging...")
-        for i in range(self.build_retries):
-            self.iteration = i + 1
-            print(f"\n[Debug Iteration {self.iteration}/{self.build_retries}]")
-
-            success, raw_error_output = self.run_build_verification()
-            if success:
-                print(f"[Success] Build succeeded after {self.iteration} iterations!")
-                self.prompt_refiner.mark_build_success()
-                return True, "Build successful"
-
-            # Clean the error output
-            cleaned_errors = self.clean_build_errors(raw_error_output)
-            critical_errors = self.extract_critical_errors(raw_error_output)
-
-            # Refine prompts based on these errors for future use
-            current_file_contents = {key: data["code"] for key, data in self.files.items() if data["code"]}
-            self.prompt_refiner.analyze_errors_and_refine_prompts(
-                cleaned_errors, current_file_contents, self.api_key, self.model
-            )
-            print("[Prompt Refiner]" + self.prompt_refiner.get_refinement_summary())
-
-            print(f"\n[Debug] Cleaned error summary:")
-            print("=" * 60)
-            print(cleaned_errors)
-            print("=" * 60)
-
-            # First, identify which files need to be fixed
-            files_to_fix = self._identify_files_to_fix(cleaned_errors, critical_errors)
-
-            if not files_to_fix:
-                print("[Debug] Could not identify which files to fix")
-                continue
-
-            print(f"[Debug] Files identified for regeneration: {files_to_fix}")
-
-            # Fix each file one by one
-            for file_key in files_to_fix:
-                print(f"\n[Debug] Regenerating file: {file_key} ({self.files[file_key]['name']})")
-
-                # Create file-specific debugging prompt
-                fix_prompt = self._create_single_file_debugging_prompt(file_key, cleaned_errors, critical_errors)
-
-                messages = [{"role": "user", "content": fix_prompt}]
-                print(f"[Debug] Getting fix for {file_key}...")
-                response_text = self.generate_with_refined_prompt(fix_prompt, file_key)
-
-                # Extract and apply the fix for this specific file
-                code = self.parse_response(response_text)
-                if code:
-                    self.save_file(file_key, code)
-                    print(f"[Debug] Applied fix for {file_key}")
-                else:
-                    print(f"[Debug] Failed to extract code for {file_key}")
-
-        print(f"[Debug Failed] Could not fix the build after {self.build_retries} attempts.")
-        print("\n[Final Refinement Summary]")
-        print(self.prompt_refiner.get_refinement_summary())
-        return False, "Build debugging failed"
-
     def _identify_files_to_fix(self, cleaned_errors: str, critical_errors: Dict[str, List[str]]) -> List[str]:
         """
         Use LLM to identify which files need to be regenerated based on build errors.
@@ -1534,12 +996,12 @@ class TTNNOperationAgent:
                 # Validate that these are actual file keys
                 valid_files = [f for f in file_list if f in self.files]
                 return valid_files
+            else:
+                print(f"[Debug] No JSON list found in response: {response_text}")
         except Exception as e:
             print(f"[Debug] Error identifying files to fix: {e}")
-
-        # Fallback to the old method if JSON extraction fails
-        return self._identify_problematic_files(cleaned_errors)
-
+            return []
+        
     def _create_single_file_debugging_prompt(
         self, file_key: str, cleaned_errors: str, critical_errors: Dict[str, List[str]]
     ) -> str:
@@ -1599,14 +1061,6 @@ class TTNNOperationAgent:
 
             Generate the complete, corrected version of {file_info['name']}
 
-            Requirements:
-
-            Fix all compilation errors related to this file
-            Preserve the unique naming: {self.operation_name}
-            Ensure the code integrates properly with the reference files shown above
-
-            Generate the complete corrected code for {file_info['name']}.
-
             CRITICAL FORMAT REQUIREMENTS:
             You MUST present each corrected file using EXACTLY this format (this is parsed by regex):
 
@@ -1616,53 +1070,271 @@ class TTNNOperationAgent:
             // Must be the FULL file content, not snippets
             ```
 
-            File: another/file/that/needs/fixing.hpp
-            ```cpp
-            // Complete corrected code for this file
-            ```
-
-            EXAMPLES OF CORRECT FORMAT:
-            File: {self.operation_name}.cpp
-            ```cpp
-            #include "{self.operation_name}.hpp"
-            // ... rest of the complete file
-            ```
-
-            File: device/{self.operation_name}_op.hpp
-            ```cpp
-            #pragma once
-            // ... complete header file
-            ```
-
             IMPORTANT RULES:
             - Use EXACTLY "File: " (with space and colon) followed by the filename
             - The filename must match EXACTLY one of these: {', '.join(data['name'] for data in self.files.values())}
             - Put the language identifier (cpp) directly after the opening triple backticks
             - Each file must be complete - not excerpts or snippets
-            - Only include files that need to be changed to fix the errors
-            - The kernel files (reader, writer, compute) use different headers than host code
-            - Device-side code has different include paths than host-side code
+            - Only include the specified file
 
-            Focus on fixing the ROOT CAUSE of the errors. Now analyze and provide the corrected files.
+            Focus on fixing the ROOT CAUSE of the errors.  Use the tree-sitter tool extensively to ensure that the generated files have no compilation errors.
             """
 
-    def _create_tool_based_debugging_prompt(self, cleaned_errors: str, critical_errors: Dict[str, List[str]]) -> str:
+    def _use_targeted_editing(self, file_key: str, error_output: str) -> bool:
         """
-        This method is now deprecated in favor of file-by-file debugging.
-        Kept for backward compatibility if needed.
+        Use tree-sitter based targeted editing instead of full regeneration
         """
-        # Call the new identification method
-        files_to_fix = self._identify_files_to_fix(cleaned_errors, critical_errors)
-        # Return a simple message since we're not using this approach anymore
-        return f"Files identified for fixing: {files_to_fix}. Use file-by-file debugging instead."
+        from tree_sitter_editor import TreeSitterEditor, CodeEdit
+        
+        editor = TreeSitterEditor()
+        file_path = self.output_dir / self.files[file_key]["name"]
+        
+        if not file_path.exists():
+            return False
+        
+        # Parse current file
+        tree_id = parse_file(file_path)
+        
+        # Create prompt for targeted edits
+        edit_prompt = self._create_targeted_edit_prompt(file_key, error_output, tree_id)
+        
+        # Get LLM to suggest edits
+        messages = [{"role": "user", "content": edit_prompt}]
+        response = self.get_generation_with_tools(messages)
+        
+        # Parse edits from response
+        edits = self._parse_edit_commands(response)
+        
+        if edits:
+            # Apply edits
+            result = editor.apply_edits(file_path, edits)
+            if result.success:
+                self.files[file_key]["code"] = result.new_content
+                print(f"[Targeted Edit] Successfully applied {len(edits)} edits to {file_key}")
+                return True
+        
+        return False
 
+    def _create_targeted_edit_prompt(self, file_key: str, error_output: str, tree_id: str) -> str:
+        """
+        Create prompt for targeted editing using tree-sitter
+        """
+        # Get current file structure
+        structure_query = """
+        [
+        (function_definition
+            declarator: (function_declarator
+            declarator: (identifier) @fn_name)) @fn
+        (class_specifier
+            name: (type_identifier) @class_name) @class
+        (namespace_definition
+            name: (namespace_identifier) @ns_name) @ns
+        (preproc_include) @include
+        ]
+        """
+        
+        structure = query(tree_id, structure_query)
+        
+        structure_summary = "Current file structure:\n"
+        for item in structure:
+            if '@fn_name' in item['name']:
+                structure_summary += f"- Function: {item['text']}\n"
+            elif '@class_name' in item['name']:
+                structure_summary += f"- Class: {item['text']}\n"
+            elif '@ns_name' in item['name']:
+                structure_summary += f"- Namespace: {item['text']}\n"
+            elif '@include' in item['name']:
+                structure_summary += f"- Include: {item['text'].strip()}\n"
+        
+        return f"""Analyze these compilation errors and suggest TARGETED EDITS to fix them.
+            You have access to tree-sitter to parse and edit the code surgically.
+
+            File: {self.files[file_key]['name']}
+            {structure_summary}
+
+            Compilation Errors:
+            {error_output}
+
+            Instead of regenerating the entire file, provide SPECIFIC EDIT COMMANDS:
+
+            AVAILABLE EDIT OPERATIONS:
+            1. INSERT_INCLUDE: Add a missing include
+            Example: INSERT_INCLUDE: #include "ttnn/tensor/tensor.hpp"
+
+            2. INSERT_FUNCTION: Add a new function
+            Example: INSERT_FUNCTION inside:ttnn
+            ```cpp
+            void my_function() {{
+                // implementation
+            }}
+
+            DELETE_FUNCTION: Remove a function
+            Example: DELETE_FUNCTION: function_name
+            MODIFY_FUNCTION: Change an existing function
+            Example: MODIFY_FUNCTION: function_name
+            cppReturnType function_name(new_params) {{
+                // new implementation
+            }}
+
+            INSERT_MEMBER: Add member to a class
+            Example: INSERT_MEMBER: ClassName
+            cppint new_member_;
+
+
+            Analyze the errors and provide ONLY the necessary edits to fix them.
+            Each edit should be on a new line starting with the operation name.
+            """
+    
+    def _parse_edit_commands(self, response: str) -> List[CodeEdit]:
+        """
+        Parse edit commands from LLM response
+        """
+        from tree_sitter_editor import CodeEdit
+        edits = []
+        lines = response.split('\n')
+        i = 0
+
+        while i < len(lines):
+            line = lines[i].strip()
+            
+            if line.startswith('INSERT_INCLUDE:'):
+                include = line.split(':', 1)[1].strip()
+                edits.append(CodeEdit(
+                    operation='insert',
+                    target_type='include',
+                    target_name=include,
+                    content=include
+                ))
+                
+            elif line.startswith('INSERT_FUNCTION'):
+                # Parse location hint
+                parts = line.split()
+                location_hint = None
+                if len(parts) > 1 and parts[1].startswith('inside:'):
+                    location_hint = parts[1]
+                
+                # Get code block
+                i += 1
+                if i < len(lines) and lines[i].strip() == '```cpp':
+                    code_lines = []
+                    i += 1
+                    while i < len(lines) and lines[i].strip() != '```':
+                        code_lines.append(lines[i])
+                        i += 1
+                    
+                    code = '\n'.join(code_lines)
+                    # Extract function name from code
+                    import re
+                    name_match = re.search(r'\b(\w+)\s*\(', code)
+                    func_name = name_match.group(1) if name_match else "unknown"
+                    
+                    edits.append(CodeEdit(
+                        operation='insert',
+                        target_type='function',
+                        target_name=func_name,
+                        content=code,
+                        location_hint=location_hint
+                    ))
+                    
+            elif line.startswith('DELETE_FUNCTION:'):
+                func_name = line.split(':', 1)[1].strip()
+                edits.append(CodeEdit(
+                    operation='delete',
+                    target_type='function',
+                    target_name=func_name,
+                    content=None
+                ))
+                
+            elif line.startswith('MODIFY_FUNCTION:'):
+                func_name = line.split(':', 1)[1].strip()
+                # Get code block
+                i += 1
+                if i < len(lines) and lines[i].strip() == '```cpp':
+                    code_lines = []
+                    i += 1
+                    while i < len(lines) and lines[i].strip() != '```':
+                        code_lines.append(lines[i])
+                        i += 1
+                    
+                    code = '\n'.join(code_lines)
+                    edits.append(CodeEdit(
+                        operation='modify',
+                        target_type='function',
+                        target_name=func_name,
+                        content=code
+                    ))
+            
+            i += 1
+
+        return edits
+
+    def debug_build_loop(self) -> Tuple[bool, str]:
+        """
+        Enhanced debug loop that tries targeted editing before full regeneration
+        """
+        print(f"\n[Debug Loop] Starting intelligent build debugging...")
+        
+        for i in range(self.build_retries):
+            self.iteration = i + 1
+            print(f"\n[Debug Iteration {self.iteration}/{self.build_retries}]")
+            
+            success, raw_error_output = self.run_build_verification()
+            if success:
+                print(f"[Success] Build succeeded after {self.iteration} iterations!")
+                self.prompt_refiner.mark_build_success()
+                return True, "Build successful"
+            
+
+            print(f'[Debug] Raw error output: {raw_error_output}')
+            # Clean errors
+            cleaned_errors = self.clean_build_errors(raw_error_output)
+            critical_errors = self.extract_critical_errors(raw_error_output)
+            
+            # Identify problematic files
+            files_to_fix = self._identify_files_to_fix(cleaned_errors, critical_errors)
+            
+            if not files_to_fix:
+                print("[Debug] Could not identify which files to fix")
+                continue
+            
+            print(f"[Debug] Files identified for fixes: {files_to_fix}")
+            
+            # Try targeted editing first
+            targeted_success = False
+            for file_key in files_to_fix:
+                if self.files[file_key]["code"]:  # File exists
+                    print(f"\n[Debug] Attempting targeted edits for {file_key}")
+                    if self._use_targeted_editing(file_key, cleaned_errors):
+                        targeted_success = True
+            
+            if targeted_success:
+                print("[Debug] Applied targeted edits, retrying build...")
+                continue
+            
+            # Fall back to full regeneration if targeted editing didn't work
+            print("[Debug] Targeted editing unsuccessful, falling back to full regeneration")
+            
+            for file_key in files_to_fix:
+                print(f"\n[Debug] Regenerating file: {file_key}")
+                fix_prompt = self._create_single_file_debugging_prompt(
+                    file_key, cleaned_errors, critical_errors
+                )
+                
+                messages = [{"role": "user", "content": fix_prompt}]
+                response_text = self.generate_with_refined_prompt(fix_prompt, file_key)
+                
+                code = self.parse_response(response_text)
+                if code:
+                    self.save_file(file_key, code)
+        
+        return False, "Build debugging failed"
 
 def main():
     """Example usage of the agent"""
     import argparse
 
     parser = argparse.ArgumentParser(description="TTNN eltwise operation generator")
-    parser.add_argument("--operation", default="add", help="Type of eltwise operation")
+    parser.add_argument("--operation", default="multiply", help="Type of eltwise operation")
     parser.add_argument(
         "--tt-metal-path", required=False, default="/home/user/tt-metal", help="Path to TT-Metal repository"
     )
@@ -1672,12 +1344,14 @@ def main():
     agent = TTNNOperationAgent(
         operation_type=args.operation, tt_metal_path=args.tt_metal_path, custom_suffix=args.custom_suffix
     )
+    if ADD_TO_CMAKE: # Should only need to be called once per operation
+        agent.add_operation_to_cmake("/home/user/tt-metal/ttnn/CMakeLists.txt", args.operation)
     if COMPLETE_PARTIAL_OP:
         success = agent.complete_partial_operation()
         return 0
     elif DEBUG_ONLY:
-        # success, _ = agent.debug_build_loop()
-        success = agent.run_and_debug_test("/home/user/tt-metal/tests/ttnn/unit_tests/test_exp_add.py")
+        success, _ = agent.debug_build_loop()
+        #success = agent.run_and_debug_test("/home/user/tt-metal/tests/ttnn/unit_tests/test_exp_add.py")
         # agent.add_operation_to_cmake("/home/user/tt-metal/ttnn/CMakeLists.txt", args.operation)
     else:
         success = agent.build_operation()
