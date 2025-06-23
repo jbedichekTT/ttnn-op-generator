@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Union
 from dataclasses import dataclass
-from tree_sitter_tool import parse_file, query, replace_span, has_errors
+from ttnn_op_generator.tools.tree_sitter_tool import parse_file, query, replace_span, has_errors
 
 @dataclass
 class CodeEdit:

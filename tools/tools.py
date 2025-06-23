@@ -13,8 +13,9 @@ import tempfile
 import subprocess
 import json
 import urllib
-from ttnn_op_generator.tools.include_tool import validate_includes_for_file # Explicit relative import
-from ttnn_op_generator.tools.tree_sitter_tool import parse_file, query, has_errors # Explicit relative import
+from ttnn_op_generator.tools.include_tool import validate_includes_for_file 
+from ttnn_op_generator.tools.tree_sitter_tool import parse_file, query, has_errors
+
 
 # --- External/Missing Dependencies (keep in try-except if not available) ---
 try:

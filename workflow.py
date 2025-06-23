@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from agents.ttnn_agent_refactored import TTNNOperationAgent
+from agents.ttnn_agent import TTNNOperationAgent
 from graphs.default_graphs import (
     create_default_graph,
     create_multi_stage_graph,
@@ -28,7 +28,7 @@ def example_basic_usage():
     agent = TTNNOperationAgent(
         operation_type="multiply",
         tt_metal_path="/home/user/tt-metal",
-        custom_suffix="example"
+        custom_suffix="custom"
     )
     
     # Use default workflow
@@ -99,7 +99,7 @@ def example_multi_stage_workflow():
     print("\n=== Example 3: Multi-Stage Workflow ===")
     
     agent = TTNNOperationAgent(
-        operation_type="divide",
+        operation_type="multiply",
         tt_metal_path="/home/user/tt-metal"
     )
     
@@ -260,7 +260,7 @@ def main():
     )
     
     parser.add_argument(
-        "example",
+        "--example",
         choices=[
             "basic", "custom", "multi_stage", "partial", 
             "debug", "test", "docs", "conditional", "all"

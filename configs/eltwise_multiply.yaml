@@ -1,0 +1,282 @@
+# TTNN Eltwise Multiply Operation Configuration
+# ============================================
+
+operation:
+  name: eltwise_multiply_custom
+  type: multiply
+  description: Custom element-wise multiplication operation for TT-Metal
+  
+  metadata:
+    class_name: EltwiseMultiplyCustom
+    python_name: eltwise_multiply_custom
+    
+  variables:
+    tile_size: 32
+    data_type: bfloat16
+
+# File Definitions
+# ================
+files:
+  # Main API Files
+  main_header:
+    path: "{name}.hpp"
+    description: Main operation header file
+    prompt: |
+      Generate the main header file for the {name} operation.
+      This is a {type} operation for TT-Metal TTNN.
+      
+      Requirements:
+      - Define the public API function in namespace ttnn::operations
+      - Include proper header guards
+      - Support tensor inputs A and B
+      - Return output tensor
+      - Use decorators::register_operation for registration
+      
+      The function signature should be:
+      Tensor {python_name}(const Tensor& a, const Tensor& b);
+
+  main_impl:
+    path: "{name}.cpp"
+    description: Main operation implementation
+    dependencies: [main_header]
+    prompt: |
+      Generate the implementation file for {name}.
+      
+      Requirements:
+      - Include the header file: {main_header.path}
+      - Implement validation logic (check tensor compatibility)
+      - Implement the dispatch to device operation
+      - Register the operation with Python bindings
+      
+      Reference the header for the function signature.
+
+  # Device Operation Files
+  device_op_header:
+    path: "device/{name}_op.hpp"
+    description: Device operation header
+    dependencies: [main_header]
+    prompt: |
+      Generate the device operation header for {name}.
+      
+      Requirements:
+      - Inherit from tt::tt_metal::operation::DeviceOperation<{class_name}>
+      - Define the operation class with proper member variables
+      - Implement required virtual methods
+      - Store operation parameters (memory config, compute kernel config)
+
+  device_op_impl:
+    path: "device/{name}_op.cpp"
+    description: Device operation implementation
+    dependencies: [device_op_header, main_header]
+    prompt: |
+      Generate the device operation implementation.
+      
+      Implement:
+      - validate() method - check tensor constraints
+      - get_parallelization_strategy() - define core grid
+      - create_program() - delegate to program factory
+
+  # Program Factory Files
+  program_factory_header:
+    path: "device/{name}_program_factory.hpp"
+    description: Program factory header
+    dependencies: [device_op_header]
+    prompt: |
+      Generate the program factory header for {name}.
+      
+      Define the create_program function that:
+      - Takes input tensors and operation parameters
+      - Returns operation::ProgramWithCallbacks
+      - Handles multi-core parallelization
+
+  program_factory_impl:
+    path: "device/{name}_program_factory.cpp"
+    description: Program factory implementation
+    dependencies: [program_factory_header, device_op_header]
+    prompt: |
+      Generate the program factory implementation.
+      
+      Implement:
+      - Buffer allocation for inputs and outputs
+      - Circular buffer configuration
+      - Kernel compilation for reader, writer, and compute
+      - Runtime argument setup
+      - Callback functions
+
+  # Kernel Files
+  reader_kernel:
+    path: "device/kernels/dataflow/{name}_reader.cpp"
+    description: Reader kernel for moving data to compute cores
+    dependencies: [program_factory_header]
+    prompt: |
+      {{dataflow_kernel_template}}
+      
+      Generate a READER kernel that:
+      - Reads tiles from input tensors A and B
+      - Writes to circular buffers for compute
+      - Handles {tile_size}x{tile_size} tiles
+      - Uses noc_async_read for data movement
+
+  writer_kernel:
+    path: "device/kernels/dataflow/{name}_writer.cpp"
+    description: Writer kernel for moving results from compute cores
+    dependencies: [program_factory_header]
+    prompt: |
+      {{dataflow_kernel_template}}
+      
+      Generate a WRITER kernel that:
+      - Reads from compute output circular buffer
+      - Writes tiles to output tensor in DRAM
+      - Handles {tile_size}x{tile_size} tiles
+      - Uses noc_async_write for data movement
+
+  compute_kernel:
+    path: "device/kernels/compute/{name}_compute.cpp"
+    description: Compute kernel that performs the multiplication
+    dependencies: [program_factory_header]
+    prompt: |
+      Generate a COMPUTE kernel for element-wise multiplication.
+      
+      Requirements:
+      - Wait for tiles in input circular buffers
+      - Perform element-wise multiply using compute APIs
+      - Write results to output circular buffer
+      - Handle {data_type} data type
+      - Process tiles of size {tile_size}x{tile_size}
+
+  # Python Binding Files
+  pybind_header:
+    path: "{name}_pybind.hpp"
+    description: Python binding header
+    dependencies: [main_header]
+    prompt: |
+      Generate the Python binding header for {name}.
+      
+      Declare the bind function:
+      void bind_{python_name}(py::module& m);
+
+  pybind_impl:
+    path: "{name}_pybind.cpp"
+    description: Python binding implementation
+    dependencies: [pybind_header, main_header]
+    prompt: |
+      Generate the Python binding implementation.
+      
+      Implement bind_{python_name} to:
+      - Bind the C++ function to Python
+      - Add proper documentation
+      - Handle optional parameters if any
+
+  # Build Files
+  cmake_file:
+    path: "CMakeLists.txt"
+    description: CMake configuration for building the operation
+    prompt: |
+      Generate CMakeLists.txt for the {name} operation.
+      
+      Requirements:
+      - Create library target: ttnn_{name}
+      - Include all source files
+      - Link against tt_metal and ttnn_cpp
+      - Set C++20 standard
+      - Add include directories
+      - Create alias target TT::NN::Ops::{class_name}
+
+# Templates
+# =========
+templates:
+  dataflow_kernel_template: |
+    This is a dataflow kernel for TT-Metal.
+    Use these includes:
+    - #include "dataflow_api.h"
+    - #include "ttnn/cpp/ttnn/operations/{name}/device/{name}_op.hpp"
+    
+    Use proper synchronization with IDLE cycles.
+
+# Workflow Definition
+# ==================
+workflow:
+  start: setup
+  description: Standard workflow with intelligent debugging
+  
+  nodes:
+    # Setup Phase
+    setup:
+      type: setup
+      description: Verify environment and create directories
+      next: generate_headers
+
+    # Generation Phase - Headers First
+    generate_headers:
+      type: generate_group
+      description: Generate all header files
+      config:
+        parallel: true
+      generates: [main_header, device_op_header, program_factory_header, pybind_header]
+      next: generate_implementations
+
+    # Generation Phase - Implementations
+    generate_implementations:
+      type: generate_group  
+      description: Generate implementation files
+      config:
+        parallel: false  # Sequential to ensure dependencies
+      generates: [main_impl, device_op_impl, program_factory_impl]
+      next: generate_kernels
+
+    # Generation Phase - Kernels
+    generate_kernels:
+      type: generate_group
+      description: Generate kernel files
+      config:
+        parallel: true
+      generates: [reader_kernel, writer_kernel, compute_kernel]
+      next: generate_bindings
+
+    # Generation Phase - Python Bindings and Build
+    generate_bindings:
+      type: generate_group
+      description: Generate Python bindings and CMake
+      generates: [pybind_impl, cmake_file]
+      next: build
+
+    # Build Verification
+    build:
+      type: build_verification
+      description: Compile the operation
+      on_success: success
+      on_failure: debug_loop
+
+    # Debug Loop
+    debug_loop:
+      type: debug_loop
+      description: Iterative debugging loop
+      config:
+        max_attempts: 3
+      next: analyze_errors
+
+    analyze_errors:
+      type: debug_analysis
+      description: Analyze build errors
+      config:
+        error_source: build
+      next: apply_fixes
+
+    apply_fixes:
+      type: debug_fix
+      description: Apply fixes to problematic files
+      config:
+        use_targeted_editing: true
+        analysis_source: analyze_errors
+      next: rebuild
+
+    rebuild:
+      type: build_verification
+      description: Rebuild after fixes
+      on_success: success
+      on_failure: debug_loop
+
+    # Success
+    success:
+      type: end
+      description: Operation built successfully
