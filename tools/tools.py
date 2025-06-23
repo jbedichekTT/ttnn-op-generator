@@ -7,7 +7,22 @@ import tempfile
 import subprocess
 import json
 import urllib
+import os
+import re
+import tempfile
+import subprocess
+import json
+import urllib
+from ttnn_op_generator.tools.include_tool import validate_includes_for_file # Explicit relative import
+from ttnn_op_generator.tools.tree_sitter_tool import parse_file, query, has_errors # Explicit relative import
 
+# --- External/Missing Dependencies (keep in try-except if not available) ---
+try:
+    from tree_sitter_editor import TreeSitterEditor, CodeEdit
+except ImportError:
+    print("Warning: `tree_sitter_editor` not found. Targeted editing features may be limited.")
+    TreeSitterEditor = None # Assign None to prevent NameError later
+    CodeEdit = None # Assign None to prevent NameError later
 
 # --- Tool Implementations ---
 def wait_for_usage_limits():
@@ -1382,21 +1397,7 @@ def apply_targeted_edits(file_path: str, edits: List[Dict[str, Any]]) -> Dict[st
             "required": ["filenames"]
         }
     },
-{
-        "name": "find_files_in_repository",
-        "description": "Searches for one or more files in the TT-Metal repository. Accepts either a single filename or a list of filenames. Returns the relative paths for all requested files in one call.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "filenames": {
-                    "type": ["string", "array"],
-                    "description": "Single filename string or list of filenames to search for, e.g., 'tensor.hpp' or ['tensor.hpp', 'device.hpp', 'program.hpp']",
-                    "items": {"type": "string"} if "array" else None
-                }
-            },
-            "required": ["filenames"]
-        }
-    },
+
 {
         "name": "check_common_namespace_issues",
         "description": "Analyzes build error output to identify and resolve common namespace issues in TT-Metal. Automatically extracts problematic symbols and suggests corrections.",
@@ -1475,7 +1476,22 @@ def apply_targeted_edits(file_path: str, edits: List[Dict[str, Any]]) -> Dict[st
 # --- Updated Tool Definitions for the API ---
 
 AVAILABLE_TOOLS = [
-    {
+        {
+        "name": "find_files_in_repository",
+        "description": "Searches for one or more files in the TT-Metal repository. Accepts either a single filename or a list of filenames. Returns the relative paths for all requested files in one call.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "filenames": {
+                    "type": ["string", "array"],
+                    "description": "Single filename string or list of filenames to search for, e.g., 'tensor.hpp' or ['tensor.hpp', 'device.hpp', 'program.hpp']",
+                    "items": {"type": "string"} if "array" else None
+                }
+            },
+            "required": ["filenames"]
+        }
+    },
+        {
         "name": "find_api_usages",
         "description": "Searches for usage examples of one or more API functions. Accepts either a single function name or a list. Returns examples for all requested functions in one call.",
         "input_schema": {
@@ -1496,7 +1512,7 @@ AVAILABLE_TOOLS = [
             },
             "required": ["function_names"]
         }
-    },
+        },
     {
         "name": "parse_and_analyze_code",
         "description": "Parse a C++ file and analyze its tree-sitter structure",
@@ -1539,6 +1555,27 @@ AVAILABLE_TOOLS = [
             },
             "required": ["file_path", "edits"]
         }
+    },
+    {
+    "name": "validate_includes_for_file",
+    "description": "Validates C++ include paths by attempting to compile them in the context of the target file. Returns corrected paths and recommendations. Essential for fixing include errors.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "include_paths": {
+                "oneOf": [
+                    {"type": "string"},
+                    {"type": "array", "items": {"type": "string"}}
+                ],
+                "description": "Single include path or list of include paths to validate, e.g., 'ttnn/tensor.hpp' or ['tt_metal/device.hpp', 'ttnn/operation.hpp']"
+            },
+            "target_file_path": {
+                "type": "string",
+                "description": "Path of the target file relative to operation directory, e.g., 'eltwise_multiply_custom.cpp' or 'device/eltwise_multiply_custom_op.hpp'"
+            }
+        },
+        "required": ["include_paths", "target_file_path"]
+    },
     }
 ]
 
@@ -1547,12 +1584,13 @@ AVAILABLE_TOOLS = [
 # --- Tool Executor Mapping ---
 
 TOOL_EXECUTORS = {
-    # "find_files_in_repository": find_files_in_repository,
+    "find_files_in_repository": find_files_in_repository,
     #"extract_symbols_from_files": extract_symbols_from_files,
     # "read_ttnn_example_files": read_ttnn_example_files,
     "find_api_usages": find_api_usages,
     "parse_and_analyze_code": parse_and_analyze_code,
-    "apply_targeted_edits": apply_targeted_edits
+    "apply_targeted_edits": apply_targeted_edits,
+    "validate_includes_for_file": validate_includes_for_file
     #"resolve_namespace_and_verify": resolve_namespace_and_verify,
     #"search_tt_metal_docs": search_tt_metal_docs
     # "check_common_namespace_issues": check_common_namespace_issues

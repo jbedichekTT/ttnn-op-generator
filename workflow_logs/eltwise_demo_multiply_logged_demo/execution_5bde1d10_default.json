@@ -1,0 +1,1153 @@
+{
+  "execution_id": "5bde1d10",
+  "workflow_name": "default",
+  "start_time": 1750699948.377474,
+  "start_time_str": "2025-06-23T17:32:28.377474",
+  "end_time": 1750699948.381088,
+  "end_time_str": "2025-06-23T17:32:28.381088",
+  "duration": 0.0036139488220214844,
+  "success": false,
+  "node_logs": [
+    {
+      "node_name": "setup",
+      "node_type": "SetupNode",
+      "start_time": 1750699948.3776624,
+      "end_time": 1750699948.3776624,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.377662",
+      "end_time_str": "2025-06-23T17:32:28.377662"
+    },
+    {
+      "node_name": "generate_hpp",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3777618,
+      "end_time": 1750699948.3777618,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.377762",
+      "end_time_str": "2025-06-23T17:32:28.377762"
+    },
+    {
+      "node_name": "generate_cpp",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.377833,
+      "end_time": 1750699948.377833,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.377833",
+      "end_time_str": "2025-06-23T17:32:28.377833"
+    },
+    {
+      "node_name": "generate_op-hpp",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3778973,
+      "end_time": 1750699948.3778973,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.377897",
+      "end_time_str": "2025-06-23T17:32:28.377897"
+    },
+    {
+      "node_name": "generate_op",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3779557,
+      "end_time": 1750699948.3779557,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.377956",
+      "end_time_str": "2025-06-23T17:32:28.377956"
+    },
+    {
+      "node_name": "generate_program-factory-hpp",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3780146,
+      "end_time": 1750699948.3780146,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378015",
+      "end_time_str": "2025-06-23T17:32:28.378015"
+    },
+    {
+      "node_name": "generate_program-factory",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3780751,
+      "end_time": 1750699948.3780751,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378075",
+      "end_time_str": "2025-06-23T17:32:28.378075"
+    },
+    {
+      "node_name": "generate_reader",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3781362,
+      "end_time": 1750699948.3781362,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378136",
+      "end_time_str": "2025-06-23T17:32:28.378136"
+    },
+    {
+      "node_name": "generate_writer",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.378195,
+      "end_time": 1750699948.378195,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378195",
+      "end_time_str": "2025-06-23T17:32:28.378195"
+    },
+    {
+      "node_name": "generate_compute",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3782616,
+      "end_time": 1750699948.3782616,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378262",
+      "end_time_str": "2025-06-23T17:32:28.378262"
+    },
+    {
+      "node_name": "generate_pybind-hpp",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3783257,
+      "end_time": 1750699948.3783257,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378326",
+      "end_time_str": "2025-06-23T17:32:28.378326"
+    },
+    {
+      "node_name": "generate_pybind-cpp",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3783846,
+      "end_time": 1750699948.3783846,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378385",
+      "end_time_str": "2025-06-23T17:32:28.378385"
+    },
+    {
+      "node_name": "generate_cmake",
+      "node_type": "GenerateFileNode",
+      "start_time": 1750699948.3784394,
+      "end_time": 1750699948.3784394,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378439",
+      "end_time_str": "2025-06-23T17:32:28.378439"
+    },
+    {
+      "node_name": "initial_build",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.378497,
+      "end_time": 1750699948.378497,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378497",
+      "end_time_str": "2025-06-23T17:32:28.378497"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.3785596,
+      "end_time": 1750699948.3785596,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378560",
+      "end_time_str": "2025-06-23T17:32:28.378560"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.378627,
+      "end_time": 1750699948.378627,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378627",
+      "end_time_str": "2025-06-23T17:32:28.378627"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3788223,
+      "end_time": 1750699948.3788223,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378822",
+      "end_time_str": "2025-06-23T17:32:28.378822"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3788862,
+      "end_time": 1750699948.3788862,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378886",
+      "end_time_str": "2025-06-23T17:32:28.378886"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.378947,
+      "end_time": 1750699948.378947,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.378947",
+      "end_time_str": "2025-06-23T17:32:28.378947"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.3790069,
+      "end_time": 1750699948.3790069,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379007",
+      "end_time_str": "2025-06-23T17:32:28.379007"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3790643,
+      "end_time": 1750699948.3790643,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379064",
+      "end_time_str": "2025-06-23T17:32:28.379064"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3791223,
+      "end_time": 1750699948.3791223,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379122",
+      "end_time_str": "2025-06-23T17:32:28.379122"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.3791835,
+      "end_time": 1750699948.3791835,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379184",
+      "end_time_str": "2025-06-23T17:32:28.379184"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.379241,
+      "end_time": 1750699948.379241,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379241",
+      "end_time_str": "2025-06-23T17:32:28.379241"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3793137,
+      "end_time": 1750699948.3793137,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379314",
+      "end_time_str": "2025-06-23T17:32:28.379314"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3793771,
+      "end_time": 1750699948.3793771,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379377",
+      "end_time_str": "2025-06-23T17:32:28.379377"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.3794322,
+      "end_time": 1750699948.3794322,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379432",
+      "end_time_str": "2025-06-23T17:32:28.379432"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.379485,
+      "end_time": 1750699948.379485,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379485",
+      "end_time_str": "2025-06-23T17:32:28.379485"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3795435,
+      "end_time": 1750699948.3795435,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379544",
+      "end_time_str": "2025-06-23T17:32:28.379544"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3796022,
+      "end_time": 1750699948.3796022,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379602",
+      "end_time_str": "2025-06-23T17:32:28.379602"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.3796613,
+      "end_time": 1750699948.3796613,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379661",
+      "end_time_str": "2025-06-23T17:32:28.379661"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.3797219,
+      "end_time": 1750699948.3797219,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379722",
+      "end_time_str": "2025-06-23T17:32:28.379722"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3797805,
+      "end_time": 1750699948.3797805,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379781",
+      "end_time_str": "2025-06-23T17:32:28.379781"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3798382,
+      "end_time": 1750699948.3798382,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379838",
+      "end_time_str": "2025-06-23T17:32:28.379838"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.3799014,
+      "end_time": 1750699948.3799014,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379901",
+      "end_time_str": "2025-06-23T17:32:28.379901"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.379962,
+      "end_time": 1750699948.379962,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.379962",
+      "end_time_str": "2025-06-23T17:32:28.379962"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3800194,
+      "end_time": 1750699948.3800194,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380019",
+      "end_time_str": "2025-06-23T17:32:28.380019"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3800752,
+      "end_time": 1750699948.3800752,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380075",
+      "end_time_str": "2025-06-23T17:32:28.380075"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.3801403,
+      "end_time": 1750699948.3801403,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380140",
+      "end_time_str": "2025-06-23T17:32:28.380140"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.380194,
+      "end_time": 1750699948.380194,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380194",
+      "end_time_str": "2025-06-23T17:32:28.380194"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.380251,
+      "end_time": 1750699948.380251,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380251",
+      "end_time_str": "2025-06-23T17:32:28.380251"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3803115,
+      "end_time": 1750699948.3803115,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380311",
+      "end_time_str": "2025-06-23T17:32:28.380311"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.380367,
+      "end_time": 1750699948.380367,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380367",
+      "end_time_str": "2025-06-23T17:32:28.380367"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.3804226,
+      "end_time": 1750699948.3804226,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380423",
+      "end_time_str": "2025-06-23T17:32:28.380423"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3804784,
+      "end_time": 1750699948.3804784,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380478",
+      "end_time_str": "2025-06-23T17:32:28.380478"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3805373,
+      "end_time": 1750699948.3805373,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380537",
+      "end_time_str": "2025-06-23T17:32:28.380537"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.380599,
+      "end_time": 1750699948.380599,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380599",
+      "end_time_str": "2025-06-23T17:32:28.380599"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.3806565,
+      "end_time": 1750699948.3806565,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380656",
+      "end_time_str": "2025-06-23T17:32:28.380656"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3807142,
+      "end_time": 1750699948.3807142,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380714",
+      "end_time_str": "2025-06-23T17:32:28.380714"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.380777,
+      "end_time": 1750699948.380777,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380777",
+      "end_time_str": "2025-06-23T17:32:28.380777"
+    },
+    {
+      "node_name": "debug_loop",
+      "node_type": "LoopControlNode",
+      "start_time": 1750699948.3808367,
+      "end_time": 1750699948.3808367,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380837",
+      "end_time_str": "2025-06-23T17:32:28.380837"
+    },
+    {
+      "node_name": "debug_analysis",
+      "node_type": "DebugAnalysisNode",
+      "start_time": 1750699948.3808942,
+      "end_time": 1750699948.3808942,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380894",
+      "end_time_str": "2025-06-23T17:32:28.380894"
+    },
+    {
+      "node_name": "debug_fix",
+      "node_type": "DebugFixNode",
+      "start_time": 1750699948.3809536,
+      "end_time": 1750699948.3809536,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.380954",
+      "end_time_str": "2025-06-23T17:32:28.380954"
+    },
+    {
+      "node_name": "rebuild",
+      "node_type": "BuildVerificationNode",
+      "start_time": 1750699948.3810146,
+      "end_time": 1750699948.3810146,
+      "duration": 0.0,
+      "status": "failure",
+      "inputs": {},
+      "outputs": {
+        "error": "'TTNNOperationAgent' object has no attribute 'nodes'"
+      },
+      "error": "'TTNNOperationAgent' object has no attribute 'nodes'",
+      "message": "Execution error: 'TTNNOperationAgent' object has no attribute 'nodes'",
+      "context_state": {
+        "global_state": {},
+        "iteration_counts": {}
+      },
+      "start_time_str": "2025-06-23T17:32:28.381015",
+      "end_time_str": "2025-06-23T17:32:28.381015"
+    }
+  ],
+  "execution_path": [
+    "setup",
+    "generate_hpp",
+    "generate_cpp",
+    "generate_op-hpp",
+    "generate_op",
+    "generate_program-factory-hpp",
+    "generate_program-factory",
+    "generate_reader",
+    "generate_writer",
+    "generate_compute",
+    "generate_pybind-hpp",
+    "generate_pybind-cpp",
+    "generate_cmake",
+    "initial_build",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild",
+    "debug_loop",
+    "debug_analysis",
+    "debug_fix",
+    "rebuild"
+  ],
+  "metadata": {
+    "agent_operation": "eltwise_demo_multiply_logged_demo",
+    "node_count": 19,
+    "edge_count": 20
+  }
+}
