@@ -28,7 +28,7 @@ class FileConfig:
         """Resolve variables in the file path."""
         path = self.path
         for var, value in variables.items():
-            path = path.replace(f"{{{var}}}", value)
+            path = path.replace(f"{{{var}}}", str(value))
         return path
 
 

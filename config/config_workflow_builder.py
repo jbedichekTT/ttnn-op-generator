@@ -216,7 +216,7 @@ class ConfigFileGenerationNode(Node):
         # Resolve variables in prompt
         prompt = self.file_config.prompt
         for var, value in self.variables.items():
-            prompt = prompt.replace(f"{{{var}}}", value)
+            prompt = prompt.replace(f"{{{var}}}", str(value))
             
         # Add context if specified
         if self.file_config.context:

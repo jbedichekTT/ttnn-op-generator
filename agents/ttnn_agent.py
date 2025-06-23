@@ -54,7 +54,7 @@ class TTNNOperationAgent:
         self,
         operation_type: str = "add",
         tt_metal_path: str = "/path/to/tt-metal",
-        api_key: str = "put api key here",
+        api_key: str = "",
         build_retries: int = BUILD_RETRIES,
         run_tests: bool = True,
         custom_suffix: str = "custom",

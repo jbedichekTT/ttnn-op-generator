@@ -188,7 +188,7 @@ class GraphExecutor:
                     print(f"[GraphExecutor] Message: {result.message}")
                     
             except Exception as e:
-                print(f"[GraphExecutor] Error executing node: {str(e)}")
+                print(f"[GraphExecutor] Error executing node {node_type}: {str(e)}")
                 result = NodeResult(
                     NodeStatus.FAILURE,
                     {"error": str(e)},
