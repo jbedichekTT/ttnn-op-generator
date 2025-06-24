@@ -120,7 +120,7 @@ def example_partial_completion():
     print("\n=== Example 4: Partial Completion ===")
     
     agent = TTNNOperationAgent(
-        operation_type="exp",
+        operation_type="multiply",
         tt_metal_path="/home/user/tt-metal"
     )
     

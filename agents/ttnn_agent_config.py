@@ -44,6 +44,20 @@ class TTNNOperationAgentConfig(TTNNOperationAgent):
         self.operation_class_name = self.operation_config.class_name
         self.python_function_name = self.operation_config.python_name
         
+        if self.operation_config.settings:
+            settings = self.operation_config.settings
+        
+        # Enable multi-stage if configured
+        if settings.use_multi_stage:
+            self.enable_multi_stage_generation()
+            print(f"[Config] Multi-stage generation enabled")
+        
+        # Apply build timeout
+        if hasattr(self, 'build_timeout'):
+            self.build_timeout = settings.build_timeout
+            
+        # Store settings for use by nodes
+        self.config_settings = settings
         # Build files structure from config
         self._build_files_structure()
         

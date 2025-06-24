@@ -14,6 +14,12 @@ operation:
     tile_size: 32
     data_type: bfloat16
 
+settings:
+    use_multi_stage: true
+    api_validation: true
+    max_refinement_iterations: 3
+    build_timeout: 1200
+
 # File Definitions
 # ================
 files:
@@ -193,47 +199,59 @@ templates:
     
     Use proper synchronization with IDLE cycles.
 
-# Workflow Definition
+# Workflow Definition  
 # ==================
 workflow:
   start: setup
-  description: Standard workflow with intelligent debugging
+  description: Multi-stage workflow with API validation
   
   nodes:
     # Setup Phase
     setup:
       type: setup
       description: Verify environment and create directories
+      next: enable_multistage
+
+    # Enable multi-stage generation
+    enable_multistage:
+      type: multi_stage_setup
+      description: Enable multi-stage generation with API validation
       next: generate_headers
 
-    # Generation Phase - Headers First
+    # Generation Phase - Headers with multi-stage
     generate_headers:
-      type: generate_group
-      description: Generate all header files
+      type: multi_stage_generate
+      description: Generate header files with API validation
       config:
+        files: [main_header, device_op_header, program_factory_header, pybind_header]
+        api_validation: true
+        max_refinements: 3
         parallel: true
-      generates: [main_header, device_op_header, program_factory_header, pybind_header]
       next: generate_implementations
 
-    # Generation Phase - Implementations
+    # Generation Phase - Critical implementations with multi-stage
     generate_implementations:
-      type: generate_group  
-      description: Generate implementation files
+      type: multi_stage_generate
+      description: Generate implementation files with validation
       config:
+        files: [main_impl, device_op_impl, program_factory_impl]
+        api_validation: true
+        max_refinements: 4
         parallel: false  # Sequential to ensure dependencies
-      generates: [main_impl, device_op_impl, program_factory_impl]
       next: generate_kernels
 
-    # Generation Phase - Kernels
+    # Generation Phase - Kernels with multi-stage
     generate_kernels:
-      type: generate_group
-      description: Generate kernel files
+      type: multi_stage_generate
+      description: Generate kernel files with API validation
       config:
+        files: [reader_kernel, writer_kernel, compute_kernel]
+        api_validation: true
+        max_refinements: 3
         parallel: true
-      generates: [reader_kernel, writer_kernel, compute_kernel]
       next: generate_bindings
 
-    # Generation Phase - Python Bindings and Build
+    # Generation Phase - Simple files with regular generation
     generate_bindings:
       type: generate_group
       description: Generate Python bindings and CMake
@@ -247,7 +265,7 @@ workflow:
       on_success: success
       on_failure: debug_loop
 
-    # Debug Loop
+    # Debug Loop - same as before
     debug_loop:
       type: debug_loop
       description: Iterative debugging loop

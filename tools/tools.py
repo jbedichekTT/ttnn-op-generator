@@ -45,7 +45,7 @@ def find_files_in_repository(filenames: Union[str, List[str]]) -> str:
 
     search_path = Path(search_path_str)
     print(f"[Tool Call] Searching for {len(filenames)} file(s) in '{search_path}'...")
-
+    
     results = {}
 
     # Build a set of all files for efficient lookup
@@ -98,7 +98,6 @@ def extract_symbols_from_files(filepaths: Union[str, List[str]]) -> str:
         return "Error: TTNN_OUTPUT_DIR environment variable is not set."
 
     print(f"[Tool Call] Extracting symbols from {len(filepaths)} file(s)...")
-
     results = {}
 
     # Regex patterns
@@ -239,7 +238,7 @@ def find_api_usages(function_names: Union[str, List[str]], max_examples_per_func
 
     search_path = Path(tt_metal_path)
     print(f"[Tool Call] Searching for usage examples of {len(function_names)} function(s)...")
-
+    print(f"[Tool Call] Searching for functions")
     # Directories to search
     search_dirs = ["ttnn/cpp/ttnn/operations", "tt_metal/impl", "tt_metal/common", "tests/ttnn"]
 
@@ -991,7 +990,6 @@ def parse_and_analyze_code(file_path: str) -> Dict[str, Any]:
     This implementation works with the correct tree-sitter API where
     query.captures() returns a dictionary of {capture_name: [nodes]}.
     """
-    from tree_sitter_tool import parse_file, query, has_errors
     
     tree_id = parse_file(file_path)
     

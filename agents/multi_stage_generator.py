@@ -195,7 +195,7 @@ class MultiStageGenerator:
 
         messages = [{"role": "user", "content": include_validation_prompt}]
         response = self.agent.get_generation_with_tools(messages)
-        
+        print(f"\n[Multi-Stage Validation]\n{include_validation_prompt}")
         # Update includes based on validation
         self._update_includes_from_validation(plan, response)
         
@@ -322,7 +322,7 @@ class MultiStageGenerator:
                 
             except json.JSONDecodeError:
                 print("[Warning] Could not parse planning JSON")
-                
+        print(f"\n[Multi-Stage plan]\n{plan}")
         return plan
         
     def _parse_validation_response(self, response: str, api: APIReference) -> Optional[Dict]:

@@ -31,6 +31,16 @@ class FileConfig:
             path = path.replace(f"{{{var}}}", str(value))
         return path
 
+@dataclass
+class OperationSettings:
+    """Settings that affect how the operation is generated."""
+    use_multi_stage: bool = False
+    api_validation: bool = True
+    max_refinement_iterations: int = 3
+    build_timeout: int = 1200
+    custom_node_handlers: Dict[str, str] = field(default_factory=dict)  # node_type -> handler_class
+    enable_parallel_generation: bool = False
+    validation_rules: List[Dict[str, Any]] = field(default_factory=list)
 
 @dataclass
 class NodeConfig:
@@ -67,7 +77,7 @@ class OperationConfig:
     description: str = ""
     templates: Dict[str, str] = field(default_factory=dict)
     variables: Dict[str, str] = field(default_factory=dict)
-    
+    settings: OperationSettings = field(default_factory=OperationSettings)
 
 class ConfigParser:
     """Parser for TTNN operation configuration files."""
@@ -109,6 +119,18 @@ class ConfigParser:
         
         # Add custom variables
         variables.update(op_data.get('variables', {}))
+    
+        # Parse operation settings (ADD THIS SECTION)
+        settings_data = op_data.get('settings', {})
+        settings = OperationSettings(
+        use_multi_stage=settings_data.get('use_multi_stage', False),
+        api_validation=settings_data.get('api_validation', True),
+        max_refinement_iterations=settings_data.get('max_refinement_iterations', 3),
+        build_timeout=settings_data.get('build_timeout', 1200),
+        custom_node_handlers=settings_data.get('custom_node_handlers', {}),
+        enable_parallel_generation=settings_data.get('enable_parallel_generation', False),
+        validation_rules=settings_data.get('validation_rules', [])
+        )
         
         # Parse files
         files = {}
@@ -153,7 +175,8 @@ class ConfigParser:
             files=files,
             workflow=workflow,
             templates=raw.get('templates', {}),
-            variables=variables
+            variables=variables,
+            settings=settings
         )
         
     def _parse_node_config(self, node_data: Dict[str, Any], files: Dict[str, FileConfig]) -> Dict[str, Any]:

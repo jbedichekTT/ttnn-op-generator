@@ -1,0 +1,96 @@
+/MULTI_STAGE
+/TEMPLATE /path/to/tt-metal/ttnn/cpp/ttnn/operations/eltwise/binary/
+/PROMPT
+Generate the main header and implementation files for a TTNN eltwise multiply operation.
+
+Create these files:
+1. eltwise_multiply_custom.hpp - Main header with public C++ API
+2. eltwise_multiply_custom.cpp - Main implementation
+
+The operation should:
+- Take two input tensors (input_tensor_a and input_tensor_b)
+- Perform element-wise multiplication
+- Support optional output memory configuration
+- Follow TTNN conventions and namespace structure
+- Include proper documentation
+
+Reference the binary operation patterns from add and subtract operations.
+Make sure to implement:
+- EltwiseMultiplyCustom structure
+- multiply_custom() function that creates the operation
+- Proper type traits and invoke methods
+/RUN
+/PROMPT
+Now generate the device operation files for the multiply operation.
+
+Create these files:
+1. device/eltwise_multiply_custom_op.hpp - Device operation header
+2. device/eltwise_multiply_custom_op.cpp - Device operation implementation
+
+The device operation should:
+- Inherit from BinaryDeviceOperation if available
+- Implement validate() and create_program() methods  
+- Handle input validation and tensor shape checks
+- Set up proper work distribution across cores
+- Use the program factory pattern
+
+Ensure consistency with the main header files already generated.
+Reference the input/output tensor handling from the main implementation.
+/RUN
+/PROMPT
+Generate the program factory files for orchestrating the multiply operation.
+
+Create these files:
+1. device/eltwise_multiply_custom_program_factory.hpp
+2. device/eltwise_multiply_custom_program_factory.cpp
+
+The program factory should:
+- Create the program with proper compute and dataflow kernels
+- Set up circular buffers for input and output tensors
+- Configure the compute kernel with multiply operation
+- Handle multi-core work distribution
+- Support different data formats (bfloat16, etc.)
+
+Make sure the kernel names match what will be implemented next.
+Use reader_kernel_id, writer_kernel_id, and compute_kernel_id.
+/RUN
+/PROMPT
+Generate the dataflow and compute kernels for the multiply operation.
+
+Create these kernel files:
+1. device/kernels/dataflow/eltwise_multiply_custom_reader.cpp
+   - Read input tensors from DRAM to L1
+   - Handle proper addressing and data movement
+   - Support interleaved and sharded layouts
+
+2. device/kernels/dataflow/eltwise_multiply_custom_writer.cpp  
+   - Write output tensor from L1 to DRAM
+   - Handle proper addressing for output
+
+3. device/kernels/compute/eltwise_multiply_custom_compute.cpp
+   - Perform element-wise multiplication in compute engine
+   - Use binary operation macros
+   - Handle tile-based computation
+
+Ensure the kernel function names match those referenced in the program factory.
+/RUN
+/PROMPT
+Finally, generate the Python binding files and CMake configuration.
+
+Create these files:
+1. eltwise_multiply_custom_pybind.hpp - Pybind header
+2. eltwise_multiply_custom_pybind.cpp - Pybind implementation
+   - Bind the multiply_custom function to Python
+   - Handle tensor arguments and memory config
+   - Add proper docstrings
+
+3. CMakeLists.txt - Build configuration
+   - Define library target ttnn_eltwise_multiply_custom
+   - Include all source files
+   - Link against ttnn dependencies
+   - Set proper include directories
+
+Make sure the Python function name is ttnn.multiply_custom.
+/RUN
+/DEBUG_LOOP
+/EXIT
