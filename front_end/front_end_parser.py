@@ -114,6 +114,12 @@ def parse_ir_markers(input_file_content: str) -> List[str]:
         section = input_file_content[start_pos:end_pos].strip()
         if section:
             sections.append(section)
+            
+    # DEBUG
+    print(f"[DEBUG parse_ir_markers] Found {len(sections)} sections")
+    for i, section in enumerate(sections):
+        print(f"[DEBUG] Section {i}: {section[:50]}...")
+    
     return sections
 
 def extract_next_word_after_marker(input_string: str, marker: str) -> List[str]:
@@ -160,27 +166,46 @@ def add_simple_edge(epic: EpicIR, previous_node: str, new_node: str) -> str:
 def parse_workflow_file(input_file_path: str) -> EpicIR:
     """
     Parses an input text file containing workflow markers and constructs an EpicIR graph.
-
-    Args:
-        input_file_path (str): The path to the input text file.
-
-    Returns:
-        EpicIR: An EpicIR object representing the parsed workflow graph.
     """
     epic = EpicIR()
     input_content = get_string_from_file(input_file_path)
     ir_marker_list = parse_ir_markers(input_content)
+    
+    # DEBUG: Print what we parsed
+    print(f"[DEBUG] Found {len(ir_marker_list)} markers")
+    for i, marker in enumerate(ir_marker_list):
+        print(f"[DEBUG] Marker {i}: {marker[:100]}...")  # First 100 chars
 
     previous_node = None
     for ir_marker in ir_marker_list:
-        ir_marker_first_word = ir_marker.split()[0]
-        ir_marker_without_first_word = " ".join(ir_marker.split()[1:])
+        # Split only on the FIRST space to get the marker and the rest
+        parts = ir_marker.strip().split(None, 1)  # Split on first whitespace
+        ir_marker_first_word = parts[0] if parts else ""
+        
+        # Everything after the marker (could be on same line or next lines)
+        if len(parts) > 1:
+            ir_marker_content = parts[1]
+        else:
+            # No content on the same line, check if there's content on following lines
+            lines = ir_marker.strip().split('\n', 1)
+            if len(lines) > 1:
+                ir_marker_content = lines[1]
+            else:
+                ir_marker_content = ""
+        
+        print(f"[DEBUG] Processing marker: {ir_marker_first_word}")
+        print(f"[DEBUG] Content preview: {ir_marker_content[:100] if ir_marker_content else 'EMPTY'}...")
 
         if ir_marker_first_word == "/TEMPLATE":
-            new_node = epic.add_node(opcode=Opcode.TEMPLATE, contents={"path": ir_marker_without_first_word})
+            # Extract template path from content
+            template_path = ir_marker_content.strip()
+            print(f"[DEBUG] Template path: {template_path}")
+            new_node = epic.add_node(opcode=Opcode.TEMPLATE, contents={"path": template_path})
             previous_node = add_simple_edge(epic, previous_node, new_node)
+            
         elif ir_marker_first_word == "/PROMPT":
-            prompt_content = ir_marker_without_first_word
+            prompt_content = ir_marker_content.strip()
+            print(f"[DEBUG] Prompt content length: {len(prompt_content)}")
             
             # Check if it's a file reference
             if prompt_content.startswith("@file:"):
@@ -190,17 +215,28 @@ def parse_workflow_file(input_file_path: str) -> EpicIR:
             
             # Handle /RO markers within the prompt content
             ro_list = extract_next_word_after_marker(prompt_content, "/RO")
-
-
+            
+            # Create the prompt node
+            new_node = epic.add_node(opcode=Opcode.PROMPT, contents={"prompt": prompt_content})
+            previous_node = add_simple_edge(epic, previous_node, new_node)
+            
+            # Add RO nodes for each /RO reference
+            for ro_file in ro_list:
+                ro_node = epic.add_node(opcode=Opcode.READ_ONLY, contents={"path": ro_file})
+                epic.graph.add_edge(ro_node, new_node)
+                
         elif ir_marker_first_word == "/RUN":
             new_node = build_default_run_node(epic)
             previous_node = add_simple_edge(epic, previous_node, new_node)
+            
         elif ir_marker_first_word == "/DEBUG_LOOP":
             new_node = epic.add_node(opcode=Opcode.DEBUG_LOOP, contents={})
             previous_node = add_simple_edge(epic, previous_node, new_node)
+            
         elif ir_marker_first_word == "/EXIT":
             new_node = epic.add_node(opcode=Opcode.EXIT, contents={})
             previous_node = add_simple_edge(epic, previous_node, new_node)
+            
         elif ir_marker_first_word == "/MULTI_STAGE":
             # Add a node that signals multi-stage should be enabled
             new_node = epic.add_node(opcode=Opcode.COMMAND, contents={"command": "enable_multi_stage"})

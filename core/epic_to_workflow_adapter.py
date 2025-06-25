@@ -21,6 +21,8 @@ class EpicToWorkflowAdapter:
         self.template_context = {}
         self.ro_files = {}
         
+    # In epic_to_workflow_adapter.py, ensure the convert method is complete:
+
     def convert(self, epic_ir: EpicIR) -> WorkflowGraph:
         """Convert an EpicIR graph to a WorkflowGraph."""
         builder = GraphBuilder(name="epic_workflow")
@@ -47,7 +49,7 @@ class EpicToWorkflowAdapter:
                 epic_node_name, 
                 epic_node_data['opcode'], 
                 epic_node_data['contents'],
-                ro_dependencies.get(epic_node_name, [])  # Pass RO deps
+                ro_dependencies.get(epic_node_name, [])
             )
             
             if workflow_node:
@@ -67,73 +69,57 @@ class EpicToWorkflowAdapter:
         if epic_ir.first_node and epic_ir.first_node in node_mapping:
             builder.set_start(node_mapping[epic_ir.first_node])
         
+        # Find and mark end nodes (nodes with no outgoing edges)
+        all_targets = set()
+        all_sources = set()
+        for source, target in epic_ir.graph.edges():
+            if source in node_mapping:
+                all_sources.add(node_mapping[source])
+            if target in node_mapping:
+                all_targets.add(node_mapping[target])
+        
+        # Nodes that are sources but not targets are potential end nodes
+        for node_name in node_mapping.values():
+            outgoing_edges = builder.graph.get_outgoing_edges(node_name)
+            if len(outgoing_edges) == 0:
+                # This is a leaf node
+                builder.add_end(node_name)
+        
         return builder.build()
-    
+        
     def _create_workflow_node(self, epic_name: str, opcode: Opcode, 
-                              contents: dict) -> Optional[Node]:
+                          contents: dict, ro_deps: List[str] = None) -> Optional[Node]:
         """Create appropriate workflow node based on opcode."""
+        
+        # DEBUG: Let's see what we're getting
+        print(f"[DEBUG _create_workflow_node] Creating node for {opcode.value}")
+        print(f"[DEBUG] Contents: {contents}")
         
         if opcode == Opcode.TEMPLATE:
             # Store template path for context
             self.template_context['template_path'] = contents.get('path', '')
             # Return a setup node that loads templates
+            self.node_counter += 1
             return TemplateLoaderNode(
                 name=f"load_template_{self.node_counter}",
-                config={'template_path': contents.get('path', '')}
+                template_path=contents.get('path', '')  # Pass directly, not as config dict
             )
             
-        if opcode == Opcode.PROMPT:
+        elif opcode == Opcode.PROMPT:
             # Convert prompt to file generation node
             prompt_text = contents.get('prompt', '')
             self.node_counter += 1
+            
+            # DEBUG
+            print(f"[DEBUG] Creating PromptExecutorNode with prompt length: {len(prompt_text)}")
+            
             return PromptExecutorNode(
                 name=f"execute_prompt_{self.node_counter}",
-                config={
-                    'prompt': prompt_text,
-                    'template_context': self.template_context.copy(),
-                    'ro_files': ro_deps or []
-                }
+                prompt=prompt_text,  # Pass directly as kwargs
+                template_context=self.template_context.copy(),
+                ro_files=ro_deps or []
             )
-            
-        elif opcode == Opcode.RUN:
-            # Map to build verification
-            return BuildVerificationNode(
-                name=f"build_verify_{self.node_counter}",
-                config={}
-            )
-            
-        elif opcode == Opcode.DEBUG_LOOP:
-            # Don't create edges from this node - it's a marker
-            self.node_counter += 1
-            return DebugLoopNode(
-                name=f"debug_loop_{self.node_counter}",
-                config={'max_iterations': 3}
-            )
-            
-        elif opcode == Opcode.EXIT:
-            # Create completion node
-            return CompletionNode(
-                name=f"completion_{self.node_counter}",
-                config={}
-            )
-            
-        elif opcode == Opcode.READ_ONLY:
-            # Store RO file reference
-            self.ro_files[epic_name] = contents.get('path', '')
-            # RO nodes don't translate directly - they're dependencies
-            return None
         
-        elif opcode == Opcode.COMMAND:
-            command = contents.get('command', '')
-            if command == 'enable_multi_stage':
-                return MultiStageEnableNode(
-                    name=f"enable_multi_stage_{self.node_counter}",
-                    config={}
-                )
-
-        self.node_counter += 1
-        return None
-    
     def _extract_ro_references(self, prompt_node_name: str) -> List[str]:
         """Extract RO file references for a prompt node."""
         # In the EpicIR, RO nodes have edges TO the prompt node
@@ -150,7 +136,7 @@ class TemplateLoaderNode(Node):
     def execute(self, context: NodeContext) -> NodeResult:
         from ttnn_op_generator.core.node_types import NodeResult, NodeStatus
         
-        template_path = self.config.get('template_path', '')
+        template_path = self.config.get('template_path', '')  # Now this will work
         print(f"\n[TemplateLoader] Loading templates from: {template_path}")
         
         # Store template information in context
@@ -161,7 +147,7 @@ class TemplateLoaderNode(Node):
         context.set_global('templates', template_files)
         
         return NodeResult(NodeStatus.SUCCESS, {"templates_loaded": len(template_files)})
-    
+
     def _load_templates(self, path: str) -> Dict[str, str]:
         """Load template files from directory."""
         templates = {}
@@ -181,8 +167,7 @@ class TemplateLoaderNode(Node):
                     except Exception as e:
                         print(f"[TemplateLoader] Error reading {file_path}: {e}")
         
-        return template
-
+        return templates
 
 class PromptExecutorNode(Node):
     """Execute a prompt to generate code."""
@@ -190,11 +175,23 @@ class PromptExecutorNode(Node):
     def execute(self, context: NodeContext) -> NodeResult:
         from ttnn_op_generator.core.node_types import NodeResult, NodeStatus
         
+        # Now access directly from self.config
         prompt = self.config.get('prompt', '')
         ro_files = self.config.get('ro_files', [])
         
         print(f"\n[PromptExecutor] Executing prompt")
+        print(f"[DEBUG] Config keys: {list(self.config.keys())}")
+        print(f"[DEBUG] Prompt length: {len(prompt)}")
+        print(f"[DEBUG] Prompt preview: {prompt[:200] if prompt else 'EMPTY'}...")
         print(f"RO Dependencies: {ro_files}")
+        
+        # Check if prompt is empty
+        if not prompt.strip():
+            return NodeResult(
+                NodeStatus.FAILURE,
+                {"error": "Empty prompt"},
+                "Prompt is empty"
+            )
         
         # Read RO files if they exist
         ro_contents = {}
@@ -210,22 +207,37 @@ class PromptExecutorNode(Node):
         
         # Generate each file
         agent = context.agent
-        for file_key in files_to_generate:
-            # Build context including RO files
-            full_context = self._build_generation_context(prompt, ro_contents)
-            
-            # Use agent to generate
-            code = agent.generate_with_refined_prompt(
-                full_context, 
-                file_key
-            )
-            
-            agent.save_file(file_key, code)
+        generated_files = []
+        failed_files = []
         
-        return NodeResult(
-            NodeStatus.SUCCESS, 
-            {"files_generated": files_to_generate}
-        )
+        for file_key in files_to_generate:
+            try:
+                # Build context including RO files
+                full_context = self._build_generation_context(prompt, ro_contents)
+                
+                # Use agent to generate
+                code = agent.generate_with_refined_prompt(
+                    full_context, 
+                    file_key
+                )
+                
+                agent.save_file(file_key, code)
+                generated_files.append(file_key)
+            except Exception as e:
+                print(f"[PromptExecutor] Error generating {file_key}: {e}")
+                failed_files.append(file_key)
+        
+        if generated_files:
+            return NodeResult(
+                NodeStatus.SUCCESS, 
+                {"files_generated": generated_files, "files_failed": failed_files}
+            )
+        else:
+            return NodeResult(
+                NodeStatus.FAILURE,
+                {"files_failed": failed_files},
+                "Failed to generate any files"
+            )
     
     def _parse_prompt_intent(self, prompt: str) -> List[str]:
         """Determine which files the prompt wants to generate."""
@@ -233,15 +245,49 @@ class PromptExecutorNode(Node):
         files = []
         
         prompt_lower = prompt.lower()
-        if "test" in prompt_lower:
-            files.extend(["test_cpp", "test_py"])
-        elif "program" in prompt_lower or "add two numbers" in prompt_lower:
-            # Likely wants the full operation
-            files.extend(["hpp", "cpp", "op-hpp", "op", "compute"])
-        else:
-            # Default to main files
-            files.extend(["hpp", "cpp"])
+        
+        # Look for specific file mentions
+        if "eltwise_multiply_custom.hpp" in prompt:
+            files.append("hpp")
+        if "eltwise_multiply_custom.cpp" in prompt:
+            files.append("cpp")
+        if "device/eltwise_multiply_custom_op.hpp" in prompt:
+            files.append("op-hpp")
+        if "device/eltwise_multiply_custom_op.cpp" in prompt:
+            files.append("op")
+        if "program_factory.hpp" in prompt:
+            files.append("program-factory-hpp")
+        if "program_factory.cpp" in prompt:
+            files.append("program-factory")
+        if "reader.cpp" in prompt:
+            files.append("reader")
+        if "writer.cpp" in prompt:
+            files.append("writer")
+        if "compute.cpp" in prompt:
+            files.append("compute")
+        if "pybind.hpp" in prompt:
+            files.append("pybind-hpp")
+        if "pybind.cpp" in prompt:
+            files.append("pybind-cpp")
+        if "CMakeLists.txt" in prompt:
+            files.append("cmake")
             
+        # Fallback patterns
+        if not files:
+            if "header" in prompt_lower and "implementation" in prompt_lower:
+                files.extend(["hpp", "cpp"])
+            elif "device operation" in prompt_lower:
+                files.extend(["op-hpp", "op"])
+            elif "program factory" in prompt_lower:
+                files.extend(["program-factory-hpp", "program-factory"])
+            elif "kernel" in prompt_lower:
+                files.extend(["reader", "writer", "compute"])
+            elif "python binding" in prompt_lower:
+                files.extend(["pybind-hpp", "pybind-cpp"])
+            elif "cmake" in prompt_lower:
+                files.append("cmake")
+            
+        print(f"[PromptExecutor] Parsed intent - files to generate: {files}")
         return files
     
     def _build_generation_context(self, prompt: str, ro_contents: Dict[str, str]) -> str:

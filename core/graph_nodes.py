@@ -83,7 +83,6 @@ class GenerateFileNode(Node):
         return context_map.get(file_key, "")
 
 
-
 class BuildVerificationNode(Node):
     """Node for running build verification."""
     

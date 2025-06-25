@@ -689,7 +689,7 @@ class TTNNOperationAgent:
         if self.multi_stage_generator is None:
             try:
                 # Import the multi-stage generator if available
-                from multi_stage_generator import MultiStageGenerator
+                from ttnn_op_generator.agents.multi_stage_generator import MultiStageGenerator
                 self.multi_stage_generator = MultiStageGenerator(self)
                 self.use_multi_stage = True
                 print("[Agent] Multi-stage generation enabled")

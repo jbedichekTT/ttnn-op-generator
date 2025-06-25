@@ -1,5 +1,4 @@
-/MULTI_STAGE
-/TEMPLATE /path/to/tt-metal/ttnn/cpp/ttnn/operations/eltwise/binary/
+/TEMPLATE /home/user/tt-metal/ttnn/cpp/ttnn/operations/embedding/
 /PROMPT
 Generate the main header and implementation files for a TTNN eltwise multiply operation.
 

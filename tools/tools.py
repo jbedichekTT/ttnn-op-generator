@@ -15,19 +15,8 @@ import json
 import urllib
 from ttnn_op_generator.tools.include_tool import validate_includes_for_file 
 from ttnn_op_generator.tools.tree_sitter_tool import parse_file, query, has_errors
+from ttnn_op_generator.tools.tree_sitter_editor import TreeSitterEditor, CodeEdit
 
-
-# --- External/Missing Dependencies (keep in try-except if not available) ---
-try:
-    from tree_sitter_editor import TreeSitterEditor, CodeEdit
-except ImportError:
-    print("Warning: `tree_sitter_editor` not found. Targeted editing features may be limited.")
-    TreeSitterEditor = None # Assign None to prevent NameError later
-    CodeEdit = None # Assign None to prevent NameError later
-
-# --- Tool Implementations ---
-def wait_for_usage_limits():
-    time.sleep(1)  # This is to prevent the API from receiving too many requests per minute.
 
 
 def find_files_in_repository(filenames: Union[str, List[str]]) -> str:
@@ -1350,9 +1339,7 @@ def parse_and_analyze_code(file_path: str) -> Dict[str, Any]:
 def apply_targeted_edits(file_path: str, edits: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Apply a list of targeted edits to a file
-    """
-    from tree_sitter_editor import TreeSitterEditor, CodeEdit
-    
+    """    
     editor = TreeSitterEditor()
     
     # Convert dict edits to CodeEdit objects

@@ -21,6 +21,12 @@ def run_generation():
     print("Parsing workflow file...")
     epic_ir = parse_workflow_file(WORKFLOW_FILE)
     
+    print("=== WORKFLOW FILE CONTENT ===")
+    with open(WORKFLOW_FILE, 'r') as f:
+        content = f.read()
+        print(content) 
+    print("=== END FILE CONTENT ===")
+    
     # Convert to workflow graph
     print("Converting to workflow graph...")
     adapter = EpicToWorkflowAdapter()
@@ -43,7 +49,7 @@ def run_generation():
     
     # Execute the workflow
     print("=" * 60)
-    print("Starting multi-stage generation...")
+    print("Starting workflow execution...")
     print("=" * 60)
     
     success = agent.build_operation()

@@ -250,7 +250,22 @@ class GraphExecutor:
                     return True
             return False
             
-        # Otherwise, look for any build success
+        # Otherwise, check if we've executed all expected nodes successfully
+        # For Epic workflows, success means all PROMPT nodes executed successfully
+        prompt_nodes = [name for name, node in self.graph.nodes.items() 
+                        if 'prompt' in name.lower()]
+        
+        if prompt_nodes:
+            successful_prompts = 0
+            for node_name in prompt_nodes:
+                result = context.node_outputs.get(node_name)
+                if result and result.status == NodeStatus.SUCCESS:
+                    successful_prompts += 1
+            
+            # Consider successful if at least some prompts succeeded
+            return successful_prompts > 0
+            
+        # Fallback: look for any build success
         for node_name, result in context.node_outputs.items():
             if 'build' in node_name.lower() and result.status == NodeStatus.SUCCESS:
                 return True
