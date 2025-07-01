@@ -1,0 +1,101 @@
+Required APIs (3):
+  - ttnn::DeviceOperation
+    ✓ Validated in: ttnn/api/ttnn/operation.hpp
+
+  - ttnn::Tensor
+    ✓ Validated in: ttnn/api/ttnn/tensor/tensor.hpp
+
+  - ttnn::MemoryConfig
+    ✓ Validated in: ttnn/api/ttnn/tensor/types.hpp
+
+
+Required Includes (3):
+  - ttnn/api/ttnn/operation.hpp
+    Reason: Required for DeviceOperation
+    Expected: DeviceOperation
+  - ttnn/api/ttnn/tensor/tensor.hpp
+    Reason: Required for Tensor
+    Expected: Tensor
+  - ttnn/api/ttnn/tensor/types.hpp
+    Reason: Required for MemoryConfig
+    Expected: MemoryConfig
+
+Namespace Imports:
+
+
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+Generate the code for the file `device/eltwise_multiply_custom_op.cpp` for the `eltwise_multiply_custom` operation.
+
+
+# TTNN Device Operation Development Context
+
+### Purpose & Structure
+Device operation headers define the **device-side operation class** that implements the low-level operation interface and manages program execution.        
+**Include Path Context for TTNN Operations:**
+The CMake build system provides include paths at these levels:
+- `{repo_root}/ttnn/`
+- `{repo_root}/ttnn/cpp/`
+
+    Therefore, #include statements must be relative to these paths:
+
+    Here is the structure for the file system you are generating:
+    ttnn/cpp/ttnn/operations/{operation_name}/
+    ├── CMakeLists.txt              # CMake
+    ├── {operation_name}.hpp        # Main header
+    ├── {operation_name}.cpp        # Main implementation
+    ├── {operation_name}_pybind.hpp # Pybind header
+    ├── {operation_name}_pybind.cpp # Pybind implementation
+    └── device/                     # Device-specific code
+        ├── {operation_name}_op.hpp
+        ├── {operation_name}_op.cpp
+        ├── {operation_name}_program_factory.hpp
+        ├── {operation_name}_program_factory.cpp
+        └── kernels/
+            ├── compute/
+            │   └── {operation_name}_compute.cpp
+            └── dataflow/
+                ├── {operation_name}_reader.cpp
+                └── {operation_name}_writer.cpp
+    
+    
+        VALIDATED API INFORMATION:
+        - ttnn::DeviceOperation
+  Include: ttnn/operation.hpp
+  Purpose: base class for custom device operations
+
+- ttnn::Tensor
+  Include: ttnn/tensor/tensor.hpp
+  Purpose: tensor type for inputs and outputs
+
+- ttnn::MemoryConfig
+  Include: ttnn/tensor/types.hpp
+  Purpose: memory configuration for tensors
+
+- ttnn::Tensor::`get_padded_shape` and `get_logical_shape` 
+  Purpose: Use for all shape calculations.
+
+
+  REQUIRED HEADERS:
+  #include "ttnn/operation.hpp"
+  // Required for DeviceOperation
+  // Provides: 2 classes, 1 constants, 4 namespaces, 6 structs
+#include "ttnn/tensor/tensor.hpp"
+  // Required for Tensor
+  // Provides: 1 classes, 1 constants, 23 functions, 4 namespaces, 4 template_functions
+#include "ttnn/tensor/types.hpp"
+  // Required for MemoryConfig
+  // Provides: 1 classes, 1 constants, 2 enums, 6 functions, 2 namespaces, 1 structs
+
+NAMESPACE USAGE:
+
+Generate the complete implementation for device/eltwise_multiply_custom_op.cpp.
+Ensure all includes are present and use the validated API signatures.
+
+
+Here is the header file for the operation, make sure to follow its signatures fully:
+@FILE device/eltwise_multiply_custom_op.hpp
+
+Use only the validated APIs and includes in the header file, do not add any new ones.

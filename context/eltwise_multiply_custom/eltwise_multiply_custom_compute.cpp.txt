@@ -1,0 +1,121 @@
+Required APIs (10):
+  - ckernel::ckernel
+    ✓ Validated in: compute_kernel_api.h
+
+  - ckernel::cb_wait_front
+
+  - ckernel::cb_pop_front
+
+  - ckernel::cb_reserve_back
+
+  - ckernel::cb_push_back
+
+  - ckernel::acquire_dst
+
+  - ckernel::release_dst
+
+  - ckernel::copy_tile
+
+  - ckernel::mul_tiles
+
+  - ckernel::pack_tile
+
+
+Required Includes (1):
+  - compute_kernel_api.h
+    Reason: Main compute kernel API header with all kernel functions
+    Expected: cb_wait_front, cb_pop_front, cb_reserve_back, cb_push_back, acquire_dst, release_dst, copy_tile, mul_tiles, pack_tile
+
+Namespace Imports:
+  - using namespace ckernel;
+
+Key Patterns to Follow:
+  - Use circular buffer IDs: cb_id_in0=0, cb_id_in1=1, cb_id_out=16
+  - Follow pattern: wait_front → copy_tile → compute → pack_tile → push_back
+  - Acquire/release destination registers around compute operations
+  - Process tiles in loops based on per_core_tile_cnt parameter
+  - Use mul_tiles for element-wise multiplication
+  - Handle tile-level parallelism with proper synchronization
+
+Common Mistakes to Avoid:
+  - Don't forget to pop tiles from input circular buffers after use
+  - Don't forget to reserve space in output circular buffer before writing
+  - Always acquire destination registers before compute operations
+  - Always release destination registers after compute operations
+  - Match the number of tiles processed with the expected per_core_tile_cnt
+  - Use correct circular buffer IDs (inputs: 0,1; output: 16 typically)
+
+
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+Generate the code for the file `device/kernels/compute/eltwise_multiply_custom_compute.cpp` for the `eltwise_multiply_custom` operation.
+
+
+        # TT-Metal Kernel Development Context
+
+        ### Memory Hierarchy
+        ```
+        Host DRAM → Device DRAM (12 channels) → L1 SRAM (1MB per core) → Register Files → Compute Units
+        ```
+
+        ### Kernel Types
+        1. **Compute Kernels**: Perform math operations on tiles in register files
+        2. **Reader Kernels**: Move data from DRAM/other cores to local L1
+        3. **Writer Kernels**: Move data from local L1 to DRAM/other cores
+
+        ### Execution Flow
+        ```
+        Reader → CB (Circular Buffer) → Compute → CB → Writer
+        ```
+  
+  Required APIs (10):
+  - ckernel::ckernel
+
+  - ckernel::cb_wait_front
+
+  - ckernel::cb_pop_front
+
+  - ckernel::cb_reserve_back
+
+  - ckernel::cb_push_back
+
+  - ckernel::acquire_dst
+
+  - ckernel::release_dst
+
+  - ckernel::copy_tile
+
+  - ckernel::mul_tiles
+
+  - ckernel::pack_tile
+
+
+Required Includes (1):
+  - compute_kernel_api.h
+    Reason: Main compute kernel API header with all kernel functions
+    Expected: cb_wait_front, cb_pop_front, cb_reserve_back, cb_push_back, acquire_dst, release_dst, copy_tile, mul_tiles, pack_tile
+
+Namespace Imports:
+  - using namespace ckernel;
+
+        
+Key Implementation Patterns:
+- Use circular buffer IDs: cb_id_in0=0, cb_id_in1=1, cb_id_out=16
+- Follow pattern: wait_front → copy_tile → compute → pack_tile → push_back
+- Acquire/release destination registers around compute operations
+- Process tiles in loops based on per_core_tile_cnt parameter
+- Use mul_tiles for element-wise multiplication
+- Handle tile-level parallelism with proper synchronization
+        
+Common Mistakes to Avoid:
+- Don't forget to pop tiles from input circular buffers after use
+- Don't forget to reserve space in output circular buffer before writing
+- Always acquire destination registers before compute operations
+- Always release destination registers after compute operations
+- Match the number of tiles processed with the expected per_core_tile_cnt
+- Use correct circular buffer IDs (inputs: 0,1; output: 16 typically)
+
+        Generate the complete implementation for device/kernels/compute/eltwise_multiply_custom_compute.cpp.
+        Ensure all includes are present and use the validated API signatures.

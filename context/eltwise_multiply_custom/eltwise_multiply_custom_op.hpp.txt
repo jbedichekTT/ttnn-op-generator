@@ -1,0 +1,115 @@
+================================================================================
+Context for: device/eltwise_multiply_custom_op.hpp
+Operation: eltwise_multiply_custom
+Generated: 2025-06-26 20:22:32
+================================================================================
+
+PLANNING RESULTS
+----------------------------------------
+
+Required APIs (4):
+  - ttnn::DeviceOperation
+    ✓ Validated in: ttnn/api/ttnn/operation.hpp
+
+  - tt::tt_metal::operation::ProgramWithCallbacks
+    Validated in ttnn/api/ttnn/operation.hpp
+
+  - ttnn::Tensor
+    ✓ Validated in: ttnn/api/ttnn/tensor/tensor.hpp
+
+  - ttnn::MemoryConfig
+    ✓ Validated in: ttnn/api/ttnn/tensor/types.hpp
+
+Required Includes (3):
+  - ttnn/api/ttnn/operation.hpp
+    Reason: DeviceOperation base class
+    Expected: DeviceOperation
+  - ttnn/api/ttnn/tensor/tensor.hpp
+    Reason: Tensor type definition
+    Expected: Tensor
+  - ttnn/api/ttnn/tensor/types.hpp
+    Reason: MemoryConfig and other tensor types
+    Expected: MemoryConfig
+
+Namespace Imports:
+  - using namespace ttnn;
+  - using namespace tt::tt_metal;
+  - using namespace tt::tt_metal::operation;
+
+Key Patterns to Follow:
+  - Use DeviceOperation<ttnn::Tensor> for single output device op
+  - Use ProgramWithCallbacks for program creation
+  - Define tensor_args_t and operation_attributes_t structs
+  - Implement create_program method returning ProgramWithCallbacks
+  - Implement compute_output_shapes method
+  - Implement is_same_operation method for caching
+  - Use const references for input parameters
+
+Common Mistakes to Avoid:
+  - Don't use deprecated APIs
+  - Don't forget const& for input parameters
+  - Include proper error handling
+  - Don't mix different operation inheritance patterns
+  - Use proper namespacing for tt_metal types
+
+
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+Generate the code for the file `device/eltwise_multiply_custom_op.hpp` for the `eltwise_multiply_custom` operation.
+
+
+# TTNN Device Operation Development Context
+
+### Purpose & Structure
+Device operation headers define the **device-side operation class** that implements the low-level operation interface and manages program execution.        
+**Include Path Context for TTNN Operations:**
+
+VALIDATED API INFORMATION:
+- ttnn::DeviceOperation
+  Include: ttnn/operation.hpp
+  Purpose: Base class for device operations
+
+- ttnn::Tensor
+  Include: ttnn/tensor/tensor.hpp
+  Purpose: Core tensor type
+
+- ttnn::MemoryConfig
+  Include: ttnn/tensor/types.hpp
+  Purpose: Memory configuration for tensors
+
+
+REQUIRED HEADERS:
+#include "ttnn/operation.hpp"
+  // DeviceOperation base class
+  // Provides: 2 classes, 1 constants, 4 namespaces, 6 structs
+#include "ttnn/tensor/tensor.hpp"
+  // Tensor type definition
+  // Provides: 1 classes, 1 constants, 23 functions, 4 namespaces, 4 template_functions
+#include "ttnn/tensor/types.hpp"
+  // MemoryConfig and other tensor types
+  // Provides: 1 classes, 1 constants, 2 enums, 6 functions, 2 namespaces, 1 structs
+#include "<tt-metalium/host_api.hpp>"
+  // Program and operation types
+
+NAMESPACE USAGE:
+ttnn, tt::tt_metal, tt::tt_metal::operation
+
+Key Implementation Patterns:
+- Use DeviceOperation<ttnn::Tensor> for single output device op
+- Use ProgramWithCallbacks for program creation
+- Define tensor_args_t and operation_attributes_t structs
+- Implement create_program method returning ProgramWithCallbacks
+- Implement compute_output_shapes method
+- Implement is_same_operation method for caching
+- Use const references for input parameters
+
+Common Mistakes to Avoid:
+- Don't use deprecated APIs
+- Don't forget const& for input parameters
+- Include proper error handling
+- Don't mix different operation inheritance patterns
+- Use proper namespacing for tt_metal types
+
+Generate the complete implementation for device/eltwise_multiply_custom_op.hpp.  Do not use any API or includes which are not present in the validated API information.

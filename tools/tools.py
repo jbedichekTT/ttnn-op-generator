@@ -16,7 +16,127 @@ import urllib
 from ttnn_op_generator.tools.include_tool import validate_includes_for_file 
 from ttnn_op_generator.tools.tree_sitter_tool import parse_file, query, has_errors
 from ttnn_op_generator.tools.tree_sitter_editor import TreeSitterEditor, CodeEdit
+from ttnn_op_generator.tools.api_extractor import extract_apis_from_header, analyze_header_dependencies
+from ttnn_op_generator.tools.database_query_tool import *
+# Add this import at the top of your tools.py
+from ttnn_op_generator.tools.tool_config import ENABLED_TOOLS, TOOL_SETS, ACTIVE_SET, TOOL_OVERRIDES
 
+# Add these functions after imports but before AVAILABLE_TOOLS definition
+def get_active_tools():
+    """Get list of currently active tools based on configuration."""
+    # Start with the active set
+    if ACTIVE_SET and ACTIVE_SET in TOOL_SETS:
+        if TOOL_SETS[ACTIVE_SET] is None:
+            # "all" preset - return all tool names
+            active_tools = list(ALL_TOOL_DEFINITIONS.keys())
+        else:
+            active_tools = list(TOOL_SETS[ACTIVE_SET])
+    else:
+        # No active set - use individual ENABLED_TOOLS settings
+        active_tools = [name for name, enabled in ENABLED_TOOLS.items() if enabled]
+    
+    # Apply overrides
+    if "enable" in TOOL_OVERRIDES:
+        for tool in TOOL_OVERRIDES["enable"]:
+            if tool not in active_tools:
+                active_tools.append(tool)
+    
+    if "disable" in TOOL_OVERRIDES:
+        active_tools = [t for t in active_tools if t not in TOOL_OVERRIDES["disable"]]
+    
+    return active_tools
+
+# Store all tool definitions (not exposed directly)
+ALL_TOOL_DEFINITIONS = {
+    "get_apis_from_header": {
+        "name": "get_apis_from_header",
+        "description": "Get all APIs (functions, classes, structs, enums, etc.) defined in a specific header file from the API database. Returns a categorized list of all APIs defined in that header.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "header_path": {
+                    "type": "string",
+                    "description": "Path to the header file, e.g., 'ttnn/tensor/tensor.hpp' or just 'tensor.hpp'. The tool handles various path formats."
+                },
+                "database_path": {
+                    "type": "string", 
+                    "description": "Path to the API database JSON file",
+                    "default": "include_api_database.json"
+                }
+            },
+            "required": ["header_path"]
+        }
+    },
+    "find_header_for_api": {
+        "name": "find_header_for_api",
+        "description": "Find which header file defines a specific API (function, class, struct, etc.). Useful for determining what to #include when using an API. Supports partial matching and type hints.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "api_name": {
+                    "type": "string",
+                    "description": "Name of the API to search for, e.g., 'Tensor', 'multiply', 'Device'"
+                },
+                "api_type": {
+                    "type": "string",
+                    "description": "Optional type hint to disambiguate: 'functions', 'classes', 'structs', 'enums', 'typedefs', 'templates', or 'constants'",
+                    "default": None
+                },
+                "database_path": {
+                    "type": "string", 
+                    "description": "Path to the API database JSON file",
+                    "default": "include_api_database.json"
+                }
+            },
+            "required": ["api_name"]
+        }
+    },
+    "search_apis": {
+        "name": "search_apis",
+        "description": "Search for APIs by partial name match across the entire codebase. Returns all APIs containing the search term along with their defining headers. Useful for discovering available APIs.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "search_term": {
+                    "type": "string",
+                    "description": "Term to search for in API names (case-insensitive partial match)"
+                },
+                "database_path": {
+                    "type": "string", 
+                    "description": "Path to the API database JSON file",
+                    "default": "include_api_database.json"
+                }
+            },
+            "required": ["search_term"]
+        }
+    },
+    "find_api_usages": {
+        "name": "find_api_usages",
+        "description": "Searches for usage examples of one or more API functions. Accepts either a single function name or a list. Returns examples for all requested functions in one call.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "function_names": {
+                    "oneOf": [
+                        {"type": "string"},
+                        {"type": "array", "items": {"type": "string"}}
+                    ],
+                    "description": "Single function name or list of API functions to find, e.g., 'create_program' or ['create_program', 'CreateCircularBuffer', 'run_operation']"
+                },
+                "max_examples_per_function": {
+                    "type": "integer",
+                    "description": "Maximum examples to return per function (default: 3)",
+                    "default": 3
+                }
+            },
+            "required": ["function_names"]
+        }
+    },
+    # Add all other tool definitions here...
+    # (I'm showing just the ones needed for your presets to keep this concise)
+}
+
+# Store all executors (commented ones stay commented)
 
 
 def find_files_in_repository(filenames: Union[str, List[str]]) -> str:
@@ -226,14 +346,14 @@ def find_api_usages(function_names: Union[str, List[str]], max_examples_per_func
         return "Error: TT_METAL_PATH environment variable is not set."
 
     search_path = Path(tt_metal_path)
-    print(f"[Tool Call] Searching for usage examples of {len(function_names)} function(s)...")
+    print(f"[Tool Call] Searching for usage examples of {len(function_names)} function(s)...{function_names}")
     print(f"[Tool Call] Searching for functions")
     # Directories to search
-    search_dirs = ["ttnn/cpp/ttnn/operations", "tt_metal/impl", "tt_metal/common", "tests/ttnn"]
+    search_dirs = ["ttnn/cpp/ttnn/operations"]
 
     results = {}
-    context_lines = 5
-
+    context_lines = 2
+    
     for function_name in function_names:
         examples = []
 
@@ -1458,11 +1578,7 @@ def apply_targeted_edits(file_path: str, edits: List[Dict[str, Any]]) -> Dict[st
             "required": ["api_names"],
         },
     },
-"""
-# --- Updated Tool Definitions for the API ---
-
-AVAILABLE_TOOLS = [
-        {
+     {
         "name": "find_files_in_repository",
         "description": "Searches for one or more files in the TT-Metal repository. Accepts either a single filename or a list of filenames. Returns the relative paths for all requested files in one call.",
         "input_schema": {
@@ -1475,42 +1591,6 @@ AVAILABLE_TOOLS = [
                 }
             },
             "required": ["filenames"]
-        }
-    },
-        {
-        "name": "find_api_usages",
-        "description": "Searches for usage examples of one or more API functions. Accepts either a single function name or a list. Returns examples for all requested functions in one call.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "function_names": {
-                    "oneOf": [
-                        {"type": "string"},
-                        {"type": "array", "items": {"type": "string"}}
-                    ],
-                    "description": "Single function name or list of API functions to find, e.g., 'create_program' or ['create_program', 'CreateCircularBuffer', 'run_operation']"
-                },
-                "max_examples_per_function": {
-                    "type": "integer",
-                    "description": "Maximum examples to return per function (default: 3)",
-                    "default": 3
-                }
-            },
-            "required": ["function_names"]
-        }
-        },
-    {
-        "name": "parse_and_analyze_code",
-        "description": "Parse a C++ file and analyze its tree-sitter structure",
-        "input_schema": {  # Changed from "parameters" to "input_schema"
-            "type": "object",
-            "properties": {
-                "file_path": {
-                    "type": "string",
-                    "description": "Path to the C++ file to analyze"
-                }
-            },
-            "required": ["file_path"]
         }
     },
     {
@@ -1543,6 +1623,47 @@ AVAILABLE_TOOLS = [
         }
     },
     {
+        "name": "find_api_usages",
+        "description": "Searches for usage examples of one or more API functions. Accepts either a single function name or a list. Returns examples for all requested functions in one call.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "function_names": {
+                    "oneOf": [
+                        {"type": "string"},
+                        {"type": "array", "items": {"type": "string"}}
+                    ],
+                    "description": "Single function name or list of API functions to find, e.g., 'create_program' or ['create_program', 'CreateCircularBuffer', 'run_operation']"
+                },
+                "max_examples_per_function": {
+                    "type": "integer",
+                    "description": "Maximum examples to return per function (default: 3)",
+                    "default": 3
+                }
+            },
+            "required": ["function_names"]
+        }
+        },
+        {
+    "name": "extract_apis_from_header",
+    "description": "Extract API declarations (functions, classes, structs) from a C++ header file without implementations. Useful for understanding what APIs are available in a header.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "header_path": {
+                "type": "string",
+                "description": "Path to header file relative to TT-Metal root, e.g., 'ttnn/tensor/tensor.hpp'"
+            },
+            "base_path": {
+                "type": "string", 
+                "description": "Optional base path to search from (defaults to TT_METAL_PATH)",
+                "default": None
+            }
+        },
+        "required": ["header_path"]
+    }
+},
+{
     "name": "validate_includes_for_file",
     "description": "Validates C++ include paths by attempting to compile them in the context of the target file. Returns corrected paths and recommendations. Essential for fixing include errors.",
     "input_schema": {
@@ -1562,22 +1683,70 @@ AVAILABLE_TOOLS = [
         },
         "required": ["include_paths", "target_file_path"]
     },
-    }
-]
-
-# Add to TOOL_EXECUTORS:
-
-# --- Tool Executor Mapping ---
-
-TOOL_EXECUTORS = {
-    "find_files_in_repository": find_files_in_repository,
+    },
+{
+        "name": "parse_and_analyze_code",
+        "description": "Parse a C++ file and analyze its tree-sitter structure",
+        "input_schema": {  # Changed from "parameters" to "input_schema"
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the C++ file to analyze"
+                }
+            },
+            "required": ["file_path"]
+        }
+    },
+"""
+# --- Updated Tool Definitions for the API ---
+ALL_TOOL_EXECUTORS = {
+    # File operations
+    #"find_files_in_repository": find_files_in_repository,
     #"extract_symbols_from_files": extract_symbols_from_files,
-    # "read_ttnn_example_files": read_ttnn_example_files,
+    #"read_ttnn_example_files": read_ttnn_example_files,
+    
+    # Code analysis
     "find_api_usages": find_api_usages,
-    "parse_and_analyze_code": parse_and_analyze_code,
-    "apply_targeted_edits": apply_targeted_edits,
-    "validate_includes_for_file": validate_includes_for_file
+    #"parse_and_analyze_code": parse_and_analyze_code,
+    #"apply_targeted_edits": apply_targeted_edits,
+    
+    # Validation
+    #"validate_includes_for_file": validate_includes_for_file,
+    #"extract_apis_from_header": extract_apis_from_header,
     #"resolve_namespace_and_verify": resolve_namespace_and_verify,
-    #"search_tt_metal_docs": search_tt_metal_docs
-    # "check_common_namespace_issues": check_common_namespace_issues
+    
+    # Documentation
+    #"search_tt_metal_docs": search_tt_metal_docs,
+    #"check_common_namespace_issues": check_common_namespace_issues,
+    
+    # Active tools
+    "get_apis_from_header": get_apis_from_header_tool,
+    "find_header_for_api": find_header_for_api_tool,
+    "search_apis": search_apis_tool,
 }
+# Dynamically build AVAILABLE_TOOLS based on config
+def get_available_tools():
+    active = get_active_tools()
+    return [ALL_TOOL_DEFINITIONS[name] for name in active if name in ALL_TOOL_DEFINITIONS]
+
+# Dynamically build TOOL_EXECUTORS
+def get_tool_executors():
+    active = get_active_tools()
+    return {name: ALL_TOOL_EXECUTORS[name] for name in active if name in ALL_TOOL_EXECUTORS}
+
+# Export these for use - these will be dynamically updated based on config
+AVAILABLE_TOOLS = get_available_tools()
+TOOL_EXECUTORS = get_tool_executors()
+
+# Optional: Add a utility function to check current configuration
+def print_active_tools():
+    """Print currently active tools for debugging."""
+    active = get_active_tools()
+    print(f"Active tool set: {ACTIVE_SET}")
+    print(f"Active tools ({len(active)}):")
+    for tool in active:
+        print(f"  - {tool}")
+    return active
+
+print_active_tools()

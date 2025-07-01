@@ -1,0 +1,55 @@
+API Definition Database Summary
+================================================================================
+
+Created: 2025-07-01 20:37:43
+TT-Metal Path: /home/user/tt-metal
+Total Headers: 341
+Total API Definitions: 2868
+
+Sample API -> Header Mappings:
+----------------------------------------
+functions::Tensor:
+  -> ttnn/api/ttnn/tensor/tensor.hpp
+
+classes::Device:
+  -> tt_metal/impl/device/device_impl.hpp
+
+classes::Program:
+  -> tt_metal/api/tt-metalium/program.hpp
+
+classes::Buffer:
+  -> tt_metal/api/tt-metalium/buffer.hpp
+
+
+Additional API Mappings:
+----------------------------------------
+functions::get_operation_name: ttnn/api/ttnn/device_operation.hpp
+functions::dispatch_to_mesh_workload_factory: ttnn/api/ttnn/device_operation.hpp
+functions::invoke: ttnn/api/ttnn/device_operation.hpp
+functions::launch_operation_with_adapter: ttnn/api/ttnn/device_operation.hpp
+functions::create_and_cache_mesh_workload: ttnn/api/ttnn/device_operation.hpp
+functions::enqueue_mesh_workload: ttnn/api/ttnn/device_operation.hpp
+functions::handle_mesh_adapter_cache_hit: ttnn/api/ttnn/device_operation.hpp
+functions::launch_on_single_device: ttnn/api/ttnn/device_operation.hpp
+functions::compute_program_hash: ttnn/api/ttnn/device_operation.hpp
+functions::log_operation: ttnn/api/ttnn/device_operation.hpp
+functions::map_index_to_variant: ttnn/api/ttnn/device_operation.hpp
+functions::launch_on_worker_thread: ttnn/api/ttnn/device_operation.hpp
+template_functions::get_operation_name: ttnn/api/ttnn/device_operation.hpp
+template_functions::dispatch_to_mesh_workload_factory: ttnn/api/ttnn/device_operation.hpp
+template_functions::invoke: ttnn/api/ttnn/device_operation.hpp
+template_functions::launch_operation_with_adapter: ttnn/api/ttnn/device_operation.hpp
+template_functions::create_and_cache_mesh_workload: ttnn/api/ttnn/device_operation.hpp
+template_functions::enqueue_mesh_workload: ttnn/api/ttnn/device_operation.hpp
+template_functions::handle_mesh_adapter_cache_hit: ttnn/api/ttnn/device_operation.hpp
+template_functions::launch_on_single_device: ttnn/api/ttnn/device_operation.hpp
+template_functions::compute_program_hash: ttnn/api/ttnn/device_operation.hpp
+template_functions::log_operation: ttnn/api/ttnn/device_operation.hpp
+template_functions::map_index_to_variant: ttnn/api/ttnn/device_operation.hpp
+template_functions::launch_on_worker_thread: ttnn/api/ttnn/device_operation.hpp
+structs::CheckDeviceBufferIsAllocated: ttnn/api/ttnn/device_operation.hpp
+namespaces::detail: ttnn/api/ttnn/device_operation.hpp
+namespaces::ttnn: ttnn/api/ttnn/device_operation.hpp
+namespaces::device_operation: ttnn/api/ttnn/device_operation.hpp
+usings::CachedProgramFactory: ttnn/api/ttnn/device_operation.hpp
+constants::USE_FAST_DISPATCH: ttnn/api/ttnn/device_operation.hpp

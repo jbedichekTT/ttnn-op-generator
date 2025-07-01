@@ -1,0 +1,141 @@
+Required APIs (5):
+  - ttnn::Tensor
+    ✓ Validated in: ttnn/api/ttnn/tensor/tensor.hpp
+
+  - ttnn::MemoryConfig
+    ✓ Validated in: ttnn/api/ttnn/tensor/types.hpp
+
+  - ttnn::DeviceOperation
+    ✓ Validated in: ttnn/api/ttnn/operation.hpp
+
+  - ttnn::run
+    ✓ Validated in: ttnn/api/ttnn/run_operation.hpp
+
+  - ttnn::decorators::register_operation
+    ✓ Validated in: ttnn/api/ttnn/decorators.hpp
+
+
+Required Includes (6):
+  - ttnn/tensor/tensor.hpp
+    Reason: Tensor type definition and core tensor operations
+    Expected: Tensor
+  - ttnn/tensor/types.hpp
+    Reason: MemoryConfig and other tensor-related types
+    Expected: MemoryConfig
+  - ttnn/operation.hpp
+    Reason: DeviceOperation base class definition
+    Expected: DeviceOperation
+  - ttnn/run_operation.hpp
+    Reason: Run operation functions for executing device operations
+    Expected: run, run_without_autoformat
+  - ttnn/decorators.hpp
+    Reason: Operation registration decorators and utilities
+    Expected: register_operation, decorators
+  - ttnn/operations/eltwise_multiply_custom/device/eltwise_multiply_custom_op.hpp
+    Reason: Device-specific operation implementation
+    Expected: EltwiseMultiplyCustom
+
+Namespace Imports:
+  - using namespace ttnn;
+  - using namespace ttnn::decorators;
+  - using namespace tt::tt_metal;
+  - using namespace tt::tt_metal::operation;
+
+Key Patterns to Follow:
+  - Use DeviceOperation<EltwiseMultiplyCustom> for device operation inheritance
+  - Use ttnn::decorators::register_operation for operation registration
+  - Implement validate_input_tensors for input validation
+  - Use std::optional<MemoryConfig> for optional memory configuration
+  - Return ttnn::Tensor from the main API function
+  - Use const Tensor& for input parameters to avoid copies
+  - Include proper error handling and validation
+  - Follow TTNN naming conventions with snake_case
+
+Common Mistakes to Avoid:
+  - Don't use the eltwise namespace - use base operations namespace
+  - Don't use ttnn::register_operation_with_auto_launch_op - use ttnn::decorators::register_operation
+  - Don't forget const& for input tensor parameters
+  - Don't hardcode memory config - make it optional with std::nullopt default
+  - Don't forget to validate input tensors before processing
+  - Don't use absolute paths in includes - use relative paths
+  - Don't forget to include all necessary headers for types used
+  - Don't mix different operation registration patterns
+
+
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+Generate the code for the file `eltwise_multiply_custom.hpp` for the `eltwise_multiply_custom` operation.
+
+
+    # TTNN Operation Component Development Contexts
+
+    ## Operation Header (.hpp) Context
+
+    ### Purpose & Structure
+    Operation headers define the **public API interface** that users call from C++ and Python.
+
+    IMPORTANT: Do not use the eltwise namespace, make this operation in the base operations namespace.
+    Use "ttnn::decorators::register_operation" not "ttnn::register_operation_with_auto_launch_op"
+    **Include Path Context for TTNN Operations:**
+
+    Here is the structure for the file system you are generating:
+    ttnn/cpp/ttnn/operations/{operation_name}/
+    ├── CMakeLists.txt              # CMake
+    ├── {operation_name}.hpp        # Main header
+    ├── {operation_name}.cpp        # Main implementation
+    ├── {operation_name}_pybind.hpp # Pybind header
+    ├── {operation_name}_pybind.cpp # Pybind implementation
+    └── device/                     # Device-specific code
+        ├── {operation_name}_op.hpp
+        ├── {operation_name}_op.cpp
+        ├── {operation_name}_program_factory.hpp
+        ├── {operation_name}_program_factory.cpp
+        └── kernels/
+            ├── compute/
+            │   └── {operation_name}_compute.cpp
+            └── dataflow/
+                ├── {operation_name}_reader.cpp
+                └── {operation_name}_writer.cpp
+              
+
+Required APIs (5):
+  - ttnn::Tensor
+    ✓ Validated in: ttnn/api/ttnn/tensor/tensor.hpp
+
+  - ttnn::MemoryConfig
+    ✓ Validated in: ttnn/api/ttnn/tensor/types.hpp
+
+  - ttnn::DeviceOperation
+    ✓ Validated in: ttnn/api/ttnn/operation.hpp
+
+  - ttnn::run
+    ✓ Validated in: ttnn/api/ttnn/run_operation.hpp
+
+  - ttnn::decorators::register_operation
+    ✓ Validated in: ttnn/api/ttnn/decorators.hpp
+
+
+Required Includes (6):
+  - ttnn/tensor/tensor.hpp
+    Reason: Tensor type definition and core tensor operations
+    Expected: Tensor
+  - ttnn/tensor/types.hpp
+    Reason: MemoryConfig and other tensor-related types
+    Expected: MemoryConfig
+  - ttnn/operation.hpp
+    Reason: DeviceOperation base class definition
+    Expected: DeviceOperation
+  - ttnn/run_operation.hpp
+    Reason: Run operation functions for executing device operations
+    Expected: run, run_without_autoformat
+  - ttnn/decorators.hpp
+    Reason: Operation registration decorators and utilities
+    Expected: register_operation, decorators
+  - ttnn/operations/eltwise_multiply_custom/device/eltwise_multiply_custom_op.hpp
+    Reason: Device-specific operation implementation
+    Expected: EltwiseMultiplyCustom
+
+
+Generate the complete implementation for eltwise_multiply_custom.hpp.

@@ -1,0 +1,124 @@
+Required APIs (6):
+  - tt::tt_metal::get_compile_time_arg_val
+
+  - tt:tt_metal::get_arg_val
+
+  - tt::tt_metal::cb_reserve_back
+
+  - tt::tt_metal::cb_push_back
+
+  - tt::tt_metal::get_write_ptr
+
+  - tt::tt_metal::noc_async_read_tile
+
+  - tt::tt_metal::noc_async_read_barrier
+
+
+Required Includes (3):
+  - dataflow_api.h
+    Reason: Core dataflow kernel APIs for NOC operations and circular buffers
+    Expected: cb_reserve_back, cb_push_back, get_write_ptr, noc_async_read_tile, noc_async_read_barrier
+  - tt_metal/hw/inc/compile_time_args.h
+    Reason: Access to compile-time arguments
+    Expected: get_compile_time_arg_val
+  - ttnn/operations/eltwise_multiply_custom/device/kernels/dataflow/common.hpp
+    Reason: Common utilities for eltwise multiply custom kernels
+    Expected: tile reading utilities, address calculation helpers
+
+Namespace Imports:
+
+Key Patterns to Follow:
+  - Reader kernels read data from DRAM and write to circular buffers (CB)
+  - Use compile-time arguments for tensor metadata (base addresses, strides, dimensions)
+  - Implement tile-based reading with proper address calculations
+  - Use async NOC operations for performance
+  - Handle both interleaved and sharded tensor layouts
+  - Coordinate with compute kernel through circular buffer flow control
+  - Support multiple input tensors (input_a and input_b for multiply operation)
+
+Common Mistakes to Avoid:
+  - Don't forget to call noc_async_read_barrier() after async reads
+  - Ensure proper circular buffer flow control (reserve before write, push after write)
+  - Handle tile alignment and padding correctly
+  - Use correct NOC addressing based on tensor layout
+  - Don't exceed circular buffer capacity
+  - Properly handle edge cases for non-aligned tensor dimensions
+
+
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+Generate the code for the file `device/kernels/dataflow/eltwise_multiply_custom_reader.cpp` for the `eltwise_multiply_custom` operation.
+
+
+        # TT-Metal Kernel Development Context
+
+        ### Memory Hierarchy
+        ```
+        Host DRAM → Device DRAM (12 channels) → L1 SRAM (1MB per core) → Register Files → Compute Units
+        ```
+
+        ### Kernel Types
+        1. **Compute Kernels**: Perform math operations on tiles in register files
+        2. **Reader Kernels**: Move data from DRAM/other cores to local L1
+        3. **Writer Kernels**: Move data from local L1 to DRAM/other cores
+
+        ### Execution Flow
+        ```
+        Reader → CB (Circular Buffer) → Compute → CB → Writer
+        ```
+        **Include Path Context for TTNN Operations:**
+    The CMake build system provides include paths at these levels:
+    - `{repo_root}/ttnn/`
+    - `{repo_root}/ttnn/cpp/`
+
+    Therefore, #include statements must be relative to these paths:
+
+
+REQUIRED HEADERS:
+  #include "dataflow_api.h"
+  // Core dataflow kernel APIs for NOC operations and circular buffers
+  // Provides: 4 constants
+#include "tt_metal/hw/inc/compile_time_args.h"
+  // Access to compile-time arguments
+  // Provides: 1 constants
+#include "ttnn/operations/eltwise_multiply_custom/device/kernels/dataflow/common.hpp"
+  // Common utilities for eltwise multiply custom kernels
+
+Required APIs (6):
+  - tt::tt_metal::get_compile_time_arg_val
+
+  - tt:tt_metal::get_arg_val
+
+  - tt::tt_metal::cb_reserve_back
+
+  - tt::tt_metal::cb_push_back
+
+  - tt::tt_metal::get_write_ptr
+
+  - tt::tt_metal::noc_async_read_tile
+
+  - tt::tt_metal::noc_async_read_barrier
+        NAMESPACE USAGE:
+        
+        
+Key Implementation Patterns:
+- Reader kernels read data from DRAM and write to circular buffers (CB)
+- Use compile-time arguments for tensor metadata (base addresses, strides, dimensions)
+- Implement tile-based reading with proper address calculations
+- Use async NOC operations for performance
+- Handle both interleaved and sharded tensor layouts
+- Coordinate with compute kernel through circular buffer flow control
+- Support multiple input tensors (input_a and input_b for multiply operation)
+        
+Common Mistakes to Avoid:
+- Don't forget to call noc_async_read_barrier() after async reads
+- Ensure proper circular buffer flow control (reserve before write, push after write)
+- Handle tile alignment and padding correctly
+- Use correct NOC addressing based on tensor layout
+- Don't exceed circular buffer capacity
+- Properly handle edge cases for non-aligned tensor dimensions
+
+        Generate the complete implementation for device/kernels/dataflow/eltwise_multiply_custom_reader.cpp.
+        Ensure all includes are present and use the validated API signatures.

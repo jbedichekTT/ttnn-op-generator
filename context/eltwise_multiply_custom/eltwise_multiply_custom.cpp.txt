@@ -1,0 +1,146 @@
+================================================================================
+Context for: eltwise_multiply_custom.cpp
+Operation: eltwise_multiply_custom
+Generated: 2025-06-26 20:17:20
+================================================================================
+
+PLANNING RESULTS
+----------------------------------------
+
+Required APIs (5):
+  - ttnn::operation::run
+    ✓ Validated in: ttnn/api/ttnn/run_operation.hpp
+
+  - ttnn::DeviceOperation
+    ✓ Validated in: ttnn/api/ttnn/operation.hpp
+
+  - ttnn::Tensor
+    ✓ Validated in: ttnn/api/ttnn/tensor/tensor.hpp
+
+  - ttnn::MemoryConfig
+    ✓ Validated in: ttnn/api/ttnn/tensor/types.hpp
+
+  - ttnn::operations::eltwise_multiply_custom::EltwiseMultiplyCustom
+    ✓ Validated in: ttnn/operations/eltwise_multiply_custom/eltwise_multiply_custom.hpp
+
+
+Required Includes (6):
+  - ttnn/operations/eltwise_multiply_custom/eltwise_multiply_custom.hpp
+    Reason: Main header with operation declarations
+    Expected: multiply_custom, EltwiseMultiplyCustom
+  - ttnn/operations/eltwise_multiply_custom/device/eltwise_multiply_custom_op.hpp
+    Reason: Device operation implementation
+    Expected: EltwiseMultiplyCustom device operation
+  - ttnn/api/ttnn/run_operation.hpp
+    Reason: Operation execution infrastructure
+    Expected: run, run_without_autoformat
+  - ttnn/api/ttnn/tensor/tensor.hpp
+    Reason: Tensor type definition and utilities
+    Expected: Tensor, is_tensor_on_device
+  - ttnn/api/ttnn/tensor/types.hpp
+    Reason: Memory configuration and tensor types
+    Expected: MemoryConfig, TensorMemoryLayout
+  - ttnn/api/ttnn/operation.hpp
+    Reason: Required for DeviceOperation
+    Expected: DeviceOperation
+
+Namespace Imports:
+  - using namespace ttnn;
+  - using namespace ttnn::operations;
+  - using namespace ttnn::operations::eltwise_multiply_custom;
+
+Key Patterns to Follow:
+  - Use ttnn::operation::run() for operation dispatch
+  - DeviceOperation pattern with template specialization
+  - Input validation before device execution
+  - Memory config handling with defaults
+  - Const reference parameters for input tensors
+  - Optional parameters with std::nullopt defaults
+  - Return single Tensor for binary operations
+
+Common Mistakes to Avoid:
+  - Don't use eltwise namespace - use base operations namespace
+  - Don't forget const& for tensor input parameters
+  - Don't hardcode memory configurations
+  - Include proper input validation
+  - Use consistent naming with multiply_custom
+  - Handle optional memory_config parameter properly
+  - Follow TTNN operation dispatch pattern
+
+
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+Generate the code for the file `eltwise_multiply_custom.cpp` for the `eltwise_multiply_custom` operation.
+
+VALIDATED API INFORMATION:
+- tt::tt_metal::operation::run
+  Include: ttnn/run_operation.hpp
+  Purpose: Execute device operations with validation and dispatch
+
+- ttnn::DeviceOperation
+  Include: ttnn/operation.hpp
+  Purpose: Base class for device operations
+
+- ttnn::Tensor
+  Include: ttnn/tensor/tensor.hpp
+  Purpose: Main tensor type for TTNN operations
+
+- ttnn::MemoryConfig
+  Include: ttnn/api/ttnn/tensor/types.hpp
+  Purpose: Configuration for tensor memory allocation
+
+- ttnn::operations::eltwise_multiply_custom::EltwiseMultiplyCustom
+  Include: ttnn/operations/eltwise_multiply_custom/eltwise_multiply_custom.hpp
+  Purpose: Device operation struct for custom multiply
+
+- ttnn::Tensor::`get_padded_shape` and `get_logical_shape`
+  Purpose: Use for all shape calculations.
+
+
+REQUIRED HEADERS:
+#include "ttnn/operations/eltwise_multiply_custom/eltwise_multiply_custom.hpp"
+  // Main header with operation declarations
+  // Provides: 1 constants, 1 functions, 4 namespaces, 1 structs
+#include "ttnn/operations/eltwise_multiply_custom/device/eltwise_multiply_custom_op.hpp"
+  // Device operation implementation
+#include "ttnn/run_operation.hpp"
+  // Operation execution infrastructure
+  // Provides: 1 constants, 4 functions, 2 namespaces, 2 template_functions, 1 usings
+#include "ttnn/tensor/tensor.hpp"
+  // Tensor type definition and utilities
+  // Provides: 1 classes, 1 constants, 23 functions, 4 namespaces, 4 template_functions
+#include "ttnn/tensor/types.hpp"
+  // Memory configuration and tensor types
+  // Provides: 1 classes, 1 constants, 2 enums, 6 functions, 2 namespaces, 1 structs
+#include "ttnn/operation.hpp"
+  // Required for DeviceOperation
+  // Provides: 2 classes, 1 constants, 4 namespaces, 6 structs
+
+NAMESPACE USAGE:
+ttnn, ttnn::operations, ttnn::operations::eltwise_multiply_custom
+
+Key Implementation Patterns:
+- Use tt::tt_metal::operation::run() for operation dispatch
+- DeviceOperation pattern with template specialization
+- Input validation before device execution
+- Memory config handling with defaults
+- Const reference parameters for input tensors
+- Optional parameters with std::nullopt defaults
+- Return single Tensor for binary operations
+
+Common Mistakes to Avoid:
+- Don't use eltwise namespace - use base operations namespace
+- Don't forget const& for tensor input parameters
+- Don't hardcode memory configurations
+- Include proper input validation
+- Use consistent naming with multiply_custom
+- Handle optional memory_config parameter properly
+- Follow TTNN operation dispatch pattern
+
+Here is the header file for the operation, follow the signatures fully to ensure functional code:
+@FILE eltwise_multiply_custom.hpp
+
+Generate the complete implementation for eltwise_multiply_custom.cpp.
+Use only the validated APIs and includes in the header file, do not add any new ones.

@@ -1,0 +1,116 @@
+Required APIs (6):
+  - tt::tt_metal::noc_async_write
+
+  - tt::tt_metal::noc_async_write_barrier
+
+  - tt::tt_metal::cb_wait_front
+
+  - tt::tt_metal::cb_pop_front
+
+  - tt::tt_metal::get_noc_addr
+
+  - tt::tt_metal::get_read_ptr
+
+
+Required Includes (2):
+  - dataflow_api.h
+    Reason: Core dataflow kernel APIs for NoC operations and circular buffers
+    Expected: noc_async_write, noc_async_write_barrier, cb_wait_front, cb_pop_front
+  - debug/dprint.h
+    Reason: Debug printing support for kernel development
+    Expected: DPRINT
+
+Namespace Imports:
+
+Key Patterns to Follow:
+  - Use compile-time arguments for buffer addresses and sizes
+  - Implement tile-by-tile processing loop with circular buffer management
+  - Use NoC async write operations for DRAM transfers
+  - Include proper barrier synchronization after write operations
+  - Handle both single-core and multi-core execution patterns
+  - Use cb_wait_front/cb_pop_front for consuming computed results
+  - Implement stride and addressing calculations for output tensor layout
+
+Common Mistakes to Avoid:
+  - Don't forget noc_async_write_barrier() after write operations
+  - Always check cb_wait_front before accessing circular buffer data
+  - Ensure proper tile alignment for NoC transfers
+  - Don't hardcode buffer IDs - use compile-time arguments
+  - Include proper error handling and bounds checking
+  - Avoid blocking operations in tight loops
+  - Use consistent naming for compile-time arguments
+  - Ensure proper coordinate calculations for multi-core scenarios
+
+
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+Generate the code for the file `device/kernels/dataflow/eltwise_multiply_custom_writer.cpp` for the `eltwise_multiply_custom` operation.
+
+
+        # TT-Metal Kernel Development Context
+
+        ### Memory Hierarchy
+        ```
+        Host DRAM → Device DRAM (12 channels) → L1 SRAM (1MB per core) → Register Files → Compute Units
+        ```
+
+        ### Kernel Types
+        1. **Compute Kernels**: Perform math operations on tiles in register files
+        2. **Reader Kernels**: Move data from DRAM/other cores to local L1
+        3. **Writer Kernels**: Move data from local L1 to DRAM/other cores
+
+        ### Execution Flow
+        ```
+        Reader → CB (Circular Buffer) → Compute → CB → Writer
+        ```
+        **Include Path Context for TTNN Operations:**
+    The CMake build system provides include paths at these levels:
+    - `{repo_root}/ttnn/`
+    - `{repo_root}/ttnn/cpp/`    
+        
+
+  REQUIRED HEADERS:
+  #include "dataflow_api.h"
+  // Core dataflow kernel APIs for NoC operations and circular buffers
+  // Provides: 4 constants
+  #include "debug/dprint.h"
+  // Debug printing support for kernel development
+  // Provides: 3 constants, 2 functions, 1 namespaces, 17 structs, 1 template_functions
+
+Required APIs (6):
+  - tt::tt_metal::noc_async_write
+
+  - tt::tt_metal::noc_async_write_barrier
+
+  - tt::tt_metal::cb_wait_front
+
+  - tt::tt_metal::cb_pop_front
+
+  - tt::tt_metal::get_noc_addr
+
+  - tt::tt_metal::get_read_ptr
+
+        
+        
+Key Implementation Patterns:
+- Use compile-time arguments for buffer addresses and sizes
+- Implement tile-by-tile processing loop with circular buffer management
+- Use NoC async write operations for DRAM transfers
+- Include proper barrier synchronization after write operations
+- Use cb_wait_front/cb_pop_front for consuming computed results
+- Implement stride and addressing calculations for output tensor layout
+        
+Common Mistakes to Avoid:
+- Don't forget noc_async_write_barrier() after write operations
+- Always check cb_wait_front before accessing circular buffer data
+- Ensure proper tile alignment for NoC transfers
+- Don't hardcode buffer IDs - use compile-time arguments
+- Include proper error handling and bounds checking
+- Avoid blocking operations in tight loops
+- Use consistent naming for compile-time arguments
+- Ensure proper coordinate calculations for multi-core scenarios
+
+        Generate the complete implementation for device/kernels/dataflow/eltwise_multiply_custom_writer.cpp.
+        Ensure all includes are present and use the validated API signatures.

@@ -1,0 +1,61 @@
+TTNN Operation Generation Context
+================================================================================
+
+Operation Type: multiply
+Operation Name: eltwise_multiply_custom
+Class Name: EltwiseMultiplyCustom
+Python Function: eltwise_multiply_custom
+Generated: 2025-06-26 20:14:03
+API Database: include_api_database.json
+
+Files to Generate:
+----------------------------------------
+hpp                  -> eltwise_multiply_custom.hpp
+cpp                  -> eltwise_multiply_custom.cpp
+                        Dependencies: hpp
+op-hpp               -> device/eltwise_multiply_custom_op.hpp
+                        Dependencies: hpp
+op                   -> device/eltwise_multiply_custom_op.cpp
+                        Dependencies: op-hpp, hpp
+program-factory-hpp  -> device/eltwise_multiply_custom_program_factory.hpp
+                        Dependencies: hpp
+program-factory      -> device/eltwise_multiply_custom_program_factory.cpp
+                        Dependencies: program-factory-hpp, op-hpp
+reader               -> device/kernels/dataflow/eltwise_multiply_custom_reader.cpp
+                        Dependencies: program-factory-hpp, op-hpp
+writer               -> device/kernels/dataflow/eltwise_multiply_custom_writer.cpp
+                        Dependencies: program-factory-hpp, op-hpp
+compute              -> device/kernels/compute/eltwise_multiply_custom_compute.cpp
+                        Dependencies: program-factory-hpp, op-hpp
+pybind-hpp           -> eltwise_multiply_custom_pybind.hpp
+                        Dependencies: hpp
+pybind-cpp           -> eltwise_multiply_custom_pybind.cpp
+                        Dependencies: pybind-hpp, hpp
+cmake                -> CMakeLists.txt
+
+
+File Generation Order:
+----------------------------------------
+ 1. hpp                  (header file)
+ 2. cpp                  (implementation file)
+ 3. op-hpp               (device operation header)
+ 4. op                   (device operation implementation)
+ 5. program-factory-hpp  (program factory header)
+ 6. program-factory      (program factory implementation)
+ 7. reader               (reader kernel)
+ 8. writer               (writer kernel)
+ 9. compute              (compute kernel)
+10. pybind-hpp           (Python binding header)
+11. pybind-cpp           (Python binding implementation)
+12. cmake                (CMake configuration)
+
+
+Key Requirements:
+----------------------------------------
+1. Use modern TTNN APIs (ttnn namespace)
+2. Use ttnn::decorators::register_operation
+3. Inherit from DeviceOperation<YourOp>
+4. Use operation::ProgramWithCallbacks
+5. Include proper headers for all types
+6. Follow const& conventions for inputs
+7. Support optional output memory config

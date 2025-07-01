@@ -1,0 +1,21 @@
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+@FILE eltwise_multiply_custom_pybind.cpp
+
+Generate the correct pybind header file for this custom op.  Here is an example of a TTNN pybind header:
+
+// SPDX-FileCopyrightText: © 2024 Tenstorrent Inc.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "ttnn-pybind/pybind_fwd.hpp"
+
+namespace py = pybind11;
+
+namespace ttnn::operations::moreh::moreh_group_norm {
+void bind_moreh_group_norm_operation(py::module& module);
+}  // namespace ttnn::operations::moreh::moreh_group_norm

@@ -1,0 +1,106 @@
+================================================================================
+FINAL GENERATION PROMPT
+================================================================================
+
+Use this downsampling pybind file as a template to generate the pybind11 bindings for the custom op:
+
+// SPDX-FileCopyrightText: © 2024 Tenstorrent Inc.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#include "downsample_pybind.hpp"
+
+#include <optional>
+
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+#include "downsample.hpp"
+#include "ttnn-pybind/decorators.hpp"
+
+namespace ttnn::operations::downsample {
+namespace {
+
+void bind_downsample(py::module& module, const char* doc) {
+    ttnn::bind_registered_operation(
+        module,
+        ttnn::downsample,
+        doc,
+        ttnn::pybind_arguments_t{
+            py::arg("input_tensor"), py::arg("downsample_params"), py::arg("dtype") = std::nullopt});
+}
+
+}  // namespace
+void py_bind_downsample(py::module& module) {
+    const auto doc = R"doc(
+        Downsamples a given multi-channel 2D (spatial) data.
+        The input data is assumed to be of the form [N, H, W, C].
+
+
+        Args:
+            input_tensor (ttnn.Tensor): the input tensor.
+            downsample_params (List): Params list: batch size, conv input H, conv input W, conv stride H, conv stride W.
+
+
+        Keyword Args:
+            dtype (ttnn.DataType, optional): Defaults to `None`.
+
+
+        Returns:
+            ttnn.Tensor: the output tensor.
+
+
+        )doc";
+    bind_downsample(module, doc);
+}
+
+}  // namespace ttnn::operations::downsample
+
+
+Here is the hpp file for the custom op:
+// SPDX-FileCopyrightText: © 2024 Tenstorrent Inc.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "ttnn/api/ttnn/tensor/tensor.hpp"
+#include "ttnn/api/ttnn/tensor/types.hpp"
+#include "ttnn/api/ttnn/operation.hpp"
+#include "ttnn/api/ttnn/run_operation.hpp"
+#include "ttnn/api/ttnn/decorators.hpp"
+#include "ttnn/operations/eltwise_multiply_custom/device/eltwise_multiply_custom_op.hpp"
+
+namespace ttnn {
+
+namespace operations {
+
+namespace eltwise_multiply_custom {
+
+struct EltwiseMultiplyCustom {
+    static ttnn::Tensor invoke(
+        const ttnn::Tensor& input_tensor_a,
+        const ttnn::Tensor& input_tensor_b,
+        const std::optional<MemoryConfig>& memory_config = std::nullopt);
+
+    static ttnn::Tensor invoke(
+        ttnn::QueueId queue_id,
+        const ttnn::Tensor& input_tensor_a,
+        const ttnn::Tensor& input_tensor_b,
+        const std::optional<MemoryConfig>& memory_config = std::nullopt);
+};
+
+}  // namespace eltwise_multiply_custom
+
+constexpr auto eltwise_multiply_custom = ttnn::decorators::register_operation<
+    "ttnn::eltwise_multiply_custom",
+    operations::eltwise_multiply_custom::EltwiseMultiplyCustom>();
+
+}  // namespace operations
+
+using operations::eltwise_multiply_custom;
+
+}  // namespace ttnn
+
+
+Now generate the correct pybind file for this custom op.

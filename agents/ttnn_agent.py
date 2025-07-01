@@ -386,14 +386,9 @@ class TTNNOperationAgent:
             "content-type": "application/json"
         }
         
-        system_prompt = f"""You are an expert in Tenstorrent's TT-Metal SDK. You are generating a CUSTOM TTNN operation '{self.operation_name}'.
-        Your goal is to generate code which compiles and correctly defines the desired operation.
-
-        Use the available tools to:
-        1. Find correct API usages and examples
-        2. Validate include paths
-        3. Understand code structure
-        4. Apply targeted fixes when needed"""
+        system_prompt = f"""You are an expert in Tenstorrent's TT-Metal SDK. You are generating a custom TTNN operation '{self.operation_name}'.
+        Your goal is to generate code which compiles and correctly defines the desired operation.  You will be provided with a list of includes and APIs
+        to use in the file, you must use those includes and APIs, and no others.  """
         
         payload = {
             "model": self.model,
@@ -699,6 +694,19 @@ class TTNNOperationAgent:
                 
     # ==================== Test Support ====================
     
+    def enable_multi_stage_prompt_generation(self):
+        """Enable multi-stage generation for this agent."""
+        if self.multi_stage_generator is None:
+            try:
+                # Import the multi-stage generator if available
+                from ttnn_op_generator.agents.multi_stage_prompt_generator import MultiStagePromptGenerator
+                self.multi_stage_generator = MultiStagePromptGenerator(self)
+                self.use_multi_stage = True
+                print("[Agent] Multi-stage prompt generation enabled")
+            except ImportError:
+                print("[Warning] Multi-stage prompt generator not available")
+                self.use_multi_stage = False
+
     def run_and_debug_test(self, test_path: str) -> bool:
         """Run and debug a test (placeholder for test debugger integration)."""
         print(f"[Test] Running test: {test_path}")
