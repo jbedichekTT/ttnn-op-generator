@@ -38,6 +38,7 @@ class IncludeDebugger:
         self.api_key = api_key
         self.database_path = database_path
         self.tt_metal_path = tt_metal_path or os.environ.get("TT_METAL_PATH", "/home/user/tt-metal")
+        print(self.database_path, Path(self.database_path).exists())
         
     def debug_file_includes(self, file_path: str, content: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -162,30 +163,37 @@ class IncludeDebugger:
     
     def find_required_headers_from_apis(self, apis_in_file):
         """Find which headers are required based on API usage."""
-        required_headers = set()
+        required_headers = {}  # Changed from set to dict
         
         for api_type, api_list in apis_in_file.items():
             for api_name in api_list:
-                if api_type == "functions":
-                    print(f"[Include Debugger] Looking up function: {api_name}")
-                    result = find_header_for_api_tool(api_name, 'functions', self.database_path)
+                if api_type == "functions" or api_type == "function_calls":
+                    # Extract just the function name (no parameters)
+                    func_name = api_name.split('(')[0].strip()
+                    if ' ' in func_name:
+                        func_name = func_name.split()[-1]
+                    
+                    print(f"[Include Debugger] Looking up function: {func_name}")
+                    result = find_header_for_api_tool(func_name, 'functions', self.database_path)
                     
                     # Check if API was found - the key check is "error" NOT in result
                     if isinstance(result, dict) and "error" not in result:
                         # API was found!
                         header = result["defined_in"]
-                        print(f"[Include Debugger] Function {api_name} found in {header}")
-                        required_headers.add(header)
+                        print(f"[Include Debugger] Function {func_name} found in {header}")
+                        # Store in dict with API key
+                        api_key = f"functions::{func_name}"
+                        required_headers[api_key] = result
                     else:
                         # API not found
-                        print(f"[Include Debugger] Function {api_name} not found in database")
+                        print(f"[Include Debugger] Function {func_name} not found in database")
                         if isinstance(result, dict):
                             if "partial_matches" in result:
                                 print(f"  Partial matches: {result['partial_matches'][:3]}")
                             elif "hint" in result:
                                 print(f"  Hint: {result['hint']}")
                 
-                elif api_type == "types":
+                elif api_type == "types" or api_type == "types_used":
                     # Handle types (classes, structs, etc.)
                     print(f"[Include Debugger] Looking up type: {api_name}")
                     
@@ -195,13 +203,15 @@ class IncludeDebugger:
                         if isinstance(result, dict) and "error" not in result:
                             header = result["defined_in"]
                             print(f"[Include Debugger] Type {api_name} ({type_category}) found in {header}")
-                            required_headers.add(header)
+                            # Store in dict with API key
+                            api_key = f"{type_category}::{api_name}"
+                            required_headers[api_key] = result
                             break
                     else:
                         print(f"[Include Debugger] Type {api_name} not found in database")
                         
-        return required_headers 
-
+        return required_headers
+    
     def _convert_extracted_apis(self, apis_in_file: Dict[str, List[str]]) -> Dict[str, Set[str]]:
         """Convert tree-sitter extracted APIs to a simpler format for display."""
         used_apis = {}
@@ -594,7 +604,7 @@ def main():
     
     parser.add_argument(
         "--database",
-        default="home/user/tt-metal/ttnn_op_generator/include_api_database.json",
+        default="/home/user/tt-metal/ttnn_op_generator/include_api_database.json",
         help="Path to the API database JSON file (default: include_api_database.json)"
     )
     
